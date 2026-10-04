@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 5002;
 app.use(cors());
 app.use(express.json());
 
+import fs from 'node:fs';
+
 // Initialize SQLite database for cached train routes and live schedules
 const db = new DatabaseSync(path.join(__dirname, 'railway.sqlite'));
 
@@ -22,7 +24,9 @@ db.exec(`
     name TEXT NOT NULL,
     city TEXT NOT NULL,
     state TEXT NOT NULL,
-    zone TEXT NOT NULL
+    zone TEXT NOT NULL,
+    lat REAL,
+    lng REAL
   );
 
   CREATE TABLE IF NOT EXISTS trains (
@@ -40,72 +44,37 @@ db.exec(`
   );
 `);
 
-// Popular Indian Railway Stations dataset across all zones
-const STATIONS = [
-  { code: 'NDLS', name: 'New Delhi Railway Station', city: 'New Delhi', state: 'Delhi', zone: 'NR' },
-  { code: 'GZB', name: 'Ghaziabad Junction', city: 'Ghaziabad', state: 'Uttar Pradesh', zone: 'NR' },
-  { code: 'ANVT', name: 'Anand Vihar Terminal', city: 'Delhi', state: 'Delhi', zone: 'NR' },
-  { code: 'DLI', name: 'Old Delhi Junction', city: 'Delhi', state: 'Delhi', zone: 'NR' },
-  { code: 'BGP', name: 'Bhagalpur Junction', city: 'Bhagalpur', state: 'Bihar', zone: 'ER' },
-  { code: 'MMCT', name: 'Mumbai Central', city: 'Mumbai', state: 'Maharashtra', zone: 'WR' },
-  { code: 'CSMT', name: 'Chhatrapati Shivaji Maharaj Terminus', city: 'Mumbai', state: 'Maharashtra', zone: 'CR' },
-  { code: 'BVI', name: 'Borivali', city: 'Mumbai', state: 'Maharashtra', zone: 'WR' },
-  { code: 'HWH', name: 'Howrah Junction', city: 'Kolkata', state: 'West Bengal', zone: 'ER' },
-  { code: 'MAS', name: 'Chennai Central', city: 'Chennai', state: 'Tamil Nadu', zone: 'SR' },
-  { code: 'SBC', name: 'KSR Bengaluru City', city: 'Bengaluru', state: 'Karnataka', zone: 'SWR' },
-  { code: 'YPR', name: 'Yesvantpur Junction', city: 'Bengaluru', state: 'Karnataka', zone: 'SWR' },
-  { code: 'BSB', name: 'Varanasi Junction', city: 'Varanasi', state: 'Uttar Pradesh', zone: 'NER' },
-  { code: 'BSBS', name: 'Banaras Railway Station', city: 'Varanasi', state: 'Uttar Pradesh', zone: 'NER' },
-  { code: 'KOTA', name: 'Kota Junction', city: 'Kota', state: 'Rajasthan', zone: 'WCR' },
-  { code: 'BPL', name: 'Bhopal Junction', city: 'Bhopal', state: 'Madhya Pradesh', zone: 'WCR' },
-  { code: 'ADI', name: 'Ahmedabad Junction', city: 'Ahmedabad', state: 'Gujarat', zone: 'WR' },
-  { code: 'CNB', name: 'Kanpur Central', city: 'Kanpur', state: 'Uttar Pradesh', zone: 'NCR' },
-  { code: 'PRYJ', name: 'Prayagraj Junction', city: 'Prayagraj', state: 'Uttar Pradesh', zone: 'NCR' },
-  { code: 'PNBE', name: 'Patna Junction', city: 'Patna', state: 'Bihar', zone: 'ECR' },
-  { code: 'LKO', name: 'Lucknow Charbagh', city: 'Lucknow', state: 'Uttar Pradesh', zone: 'NR' },
-  { code: 'ASR', name: 'Amritsar Junction', city: 'Amritsar', state: 'Punjab', zone: 'NR' },
-  { code: 'JP', name: 'Jaipur Junction', city: 'Jaipur', state: 'Rajasthan', zone: 'NWR' },
-  { code: 'UDZ', name: 'Udaipur City', city: 'Udaipur', state: 'Rajasthan', zone: 'NWR' },
-  { code: 'PUNE', name: 'Pune Junction', city: 'Pune', state: 'Maharashtra', zone: 'CR' },
-  { code: 'ST', name: 'Surat', city: 'Surat', state: 'Gujarat', zone: 'WR' },
-  { code: 'BRC', name: 'Vadodara Junction', city: 'Vadodara', state: 'Gujarat', zone: 'WR' },
-  { code: 'HYB', name: 'Hyderabad Deccan', city: 'Hyderabad', state: 'Telangana', zone: 'SCR' },
-  { code: 'SC', name: 'Secunderabad Junction', city: 'Hyderabad', state: 'Telangana', zone: 'SCR' },
-  { code: 'TVC', name: 'Thiruvananthapuram Central', city: 'Trivandrum', state: 'Kerala', zone: 'SR' },
-  { code: 'ERS', name: 'Ernakulam Junction', city: 'Kochi', state: 'Kerala', zone: 'SR' },
-  { code: 'ALLP', name: 'Alappuzha', city: 'Alleppey', state: 'Kerala', zone: 'SR' },
-  { code: 'GOA', name: 'Madgaon Junction', city: 'Goa', state: 'Goa', zone: 'KR' },
-  { code: 'MAO', name: 'Madgaon Junction', city: 'Goa', state: 'Goa', zone: 'KR' },
-  { code: 'JAT', name: 'Jammu Tawi', city: 'Jammu', state: 'Jammu & Kashmir', zone: 'NR' },
-  { code: 'SVDK', name: 'Shri Mata Vaishno Devi Katra', city: 'Katra', state: 'Jammu & Kashmir', zone: 'NR' },
-  { code: 'NJP', name: 'New Jalpaiguri', city: 'Siliguri', state: 'West Bengal', zone: 'NFR' },
-  { code: 'GHY', name: 'Guwahati', city: 'Guwahati', state: 'Assam', zone: 'NFR' },
-  { code: 'BBS', name: 'Bhubaneswar', city: 'Bhubaneswar', state: 'Odisha', zone: 'ECoR' },
-  { code: 'PURI', name: 'Puri', city: 'Puri', state: 'Odisha', zone: 'ECoR' },
-  { code: 'AGC', name: 'Agra Cantt', city: 'Agra', state: 'Uttar Pradesh', zone: 'NCR' },
-  { code: 'GKP', name: 'Gorakhpur Junction', city: 'Gorakhpur', state: 'Uttar Pradesh', zone: 'NER' },
-  { code: 'CDG', name: 'Chandigarh Junction', city: 'Chandigarh', state: 'Chandigarh', zone: 'NR' },
-  { code: 'HPT', name: 'Hosapete Junction (Hampi)', city: 'Hosapete', state: 'Karnataka', zone: 'SWR' },
-  { code: 'RMM', name: 'Rameswaram', city: 'Rameswaram', state: 'Tamil Nadu', zone: 'SR' },
-  { code: 'JHS', name: 'Virangana Lakshmibai Jhansi', city: 'Jhansi', state: 'Uttar Pradesh', zone: 'NCR' },
-  { code: 'GWL', name: 'Gwalior Junction', city: 'Gwalior', state: 'Madhya Pradesh', zone: 'NCR' },
-  { code: 'INDB', name: 'Indore Junction', city: 'Indore', state: 'Madhya Pradesh', zone: 'WR' },
-  { code: 'RNC', name: 'Ranchi Junction', city: 'Ranchi', state: 'Jharkhand', zone: 'SER' },
-  { code: 'DHN', name: 'Dhanbad Junction', city: 'Dhanbad', state: 'Jharkhand', zone: 'ECR' },
-  { code: 'DDU', name: 'Pt. Deen Dayal Upadhyaya Junction', city: 'Mughalsarai', state: 'Uttar Pradesh', zone: 'ECR' },
-  { code: 'GAYA', name: 'Gaya Junction', city: 'Gaya', state: 'Bihar', zone: 'ECR' },
-  { code: 'MFP', name: 'Muzaffarpur Junction', city: 'Muzaffarpur', state: 'Bihar', zone: 'ECR' },
-  { code: 'DBG', name: 'Darbhanga Junction', city: 'Darbhanga', state: 'Bihar', zone: 'ECR' },
-  { code: 'NGP', name: 'Nagpur Junction', city: 'Nagpur', state: 'Maharashtra', zone: 'CR' }
+// Ensure lat and lng columns exist on pre-existing databases
+try { db.exec('ALTER TABLE stations ADD COLUMN lat REAL;'); } catch (_) {}
+try { db.exec('ALTER TABLE stations ADD COLUMN lng REAL;'); } catch (_) {}
+
+// Load complete Indian Railways station dataset (9,000+ stations)
+const STATIONS = JSON.parse(fs.readFileSync(path.join(__dirname, 'stations.json'), 'utf8'));
+const STATIONS_BY_CODE = new Map(STATIONS.map(s => [s.code.toUpperCase(), s]));
+
+const POPULAR_CODES = [
+  'NDLS', 'DLI', 'ANVT', 'MMCT', 'CSMT', 'GZB', 'BGP', 'HWH',
+  'MAS', 'SBC', 'CNB', 'PRYJ', 'PNBE', 'LKO', 'ASR', 'JP',
+  'BSB', 'KOTA', 'PUNE', 'HYB', 'SC', 'ADI', 'BPL', 'SVDK'
 ];
 
-// Seed stations
-const stationInsert = db.prepare(`
-  INSERT OR IGNORE INTO stations (code, name, city, state, zone)
-  VALUES (?, ?, ?, ?, ?)
-`);
-for (const s of STATIONS) {
-  stationInsert.run(s.code, s.name, s.city, s.state, s.zone);
+// Seed stations into SQLite
+try {
+  const row = db.prepare('SELECT COUNT(*) as cnt FROM stations').get();
+  if (!row || row.cnt < STATIONS.length) {
+    const insert = db.prepare(`
+      INSERT OR REPLACE INTO stations (code, name, city, state, zone, lat, lng)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    db.exec('BEGIN TRANSACTION');
+    for (const s of STATIONS) {
+      insert.run(s.code, s.name, s.city || '', s.state || '', s.zone || 'IR', s.lat || null, s.lng || null);
+    }
+    db.exec('COMMIT');
+    console.log(`[Railway Service] Seeded ${STATIONS.length} stations into SQLite database.`);
+  }
+} catch (e) {
+  console.error('[Railway Service] DB seed error:', e.message);
 }
 
 // Comprehensive train database
@@ -293,30 +262,107 @@ app.get('/health', (req, res) => {
   res.json({ service: 'railway-service', status: 'healthy', port: PORT, activeTrains: TRAINS.length, timestamp: new Date().toISOString() });
 });
 
-// Station search (Supports any station query across Indian Railways)
-app.get('/stations', (req, res) => {
-  const query = (req.query.q || '').toLowerCase().trim();
-  if (!query) {
-    return res.json({ stations: STATIONS });
+// Helper function to search and rank stations
+function searchStations(query, limit = 20) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) {
+    return POPULAR_CODES.map(c => STATIONS_BY_CODE.get(c)).filter(Boolean).slice(0, limit);
   }
-  const filtered = STATIONS.filter(s => 
-    s.code.toLowerCase().includes(query) ||
-    s.name.toLowerCase().includes(query) ||
-    s.city.toLowerCase().includes(query) ||
-    s.state.toLowerCase().includes(query)
-  );
+
+  const scored = [];
+  for (const s of STATIONS) {
+    const code = s.code.toLowerCase();
+    const name = s.name.toLowerCase();
+    const city = (s.city || '').toLowerCase();
+    const state = (s.state || '').toLowerCase();
+
+    let score = -1;
+
+    // 1. Exact station code match (highest)
+    if (code === q) {
+      score = 2500;
+    }
+    // 2. Station code starts with query
+    else if (code.startsWith(q)) {
+      score = 1500 + (10 - code.length) * 10;
+    }
+    // 3. Exact full station name match
+    else if (name === q) {
+      score = 1300;
+    }
+    // 4. Exact word match in station name
+    else if (name.split(/[\s,.-]+/).some(w => w === q)) {
+      score = 1100;
+    }
+    // 5. Station name starts with query
+    else if (name.startsWith(q)) {
+      score = 1000;
+    }
+    // 6. Word in station name starts with query
+    else if (name.split(/[\s,.-]+/).some(w => w.startsWith(q))) {
+      score = 900;
+    }
+    // 7. Exact city match or word in city match
+    else if (city === q || city.split(/[\s,.-]+/).some(w => w === q)) {
+      score = 800;
+    }
+    // 8. City starts with query
+    else if (city.startsWith(q)) {
+      score = 700;
+    }
+    // 9. Station name contains query
+    else if (name.includes(q)) {
+      score = 500;
+    }
+    // 10. Station code contains query
+    else if (code.includes(q)) {
+      score = 400;
+    }
+    // 11. State contains query
+    else if (state.includes(q)) {
+      score = 200;
+    }
+
+    if (score > 0) {
+      if (POPULAR_CODES.includes(s.code)) score += 80;
+      scored.push({ station: s, score });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score || a.station.name.length - b.station.name.length);
+  return scored.slice(0, limit).map(item => item.station);
+}
+
+// Station search (Supports all 9,000+ Indian Railway stations with intelligent ranking)
+app.get('/stations', (req, res) => {
+  const query = (req.query.q || '').trim();
+  const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+
+  if (!query) {
+    const popular = POPULAR_CODES.map(c => STATIONS_BY_CODE.get(c)).filter(Boolean);
+    return res.json({ total: STATIONS.length, count: popular.length, stations: popular });
+  }
+
+  const filtered = searchStations(query, limit);
 
   // If no predefined match found, dynamically provide entry for any custom station code
-  if (filtered.length === 0 && query.length >= 2) {
+  if (filtered.length === 0 && query.length >= 2 && query.length <= 5) {
     const code = query.slice(0, 5).toUpperCase();
     return res.json({
+      total: 1,
+      count: 1,
       stations: [
         { code, name: `${code} Junction`, city: code, state: 'Indian Railways', zone: 'IR' }
       ]
     });
   }
 
-  res.json({ stations: filtered });
+  res.json({ total: STATIONS.length, count: filtered.length, stations: filtered });
+});
+
+// Full dataset endpoint
+app.get('/stations/all', (req, res) => {
+  res.json({ total: STATIONS.length, stations: STATIONS });
 });
 
 // Train search between ANY stations with ConfirmTkt API integration
@@ -594,6 +640,6 @@ app.get('/pnr/:pnrNumber', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`[RAILWAY-SERVICE] Running on port ${PORT}`);
 });

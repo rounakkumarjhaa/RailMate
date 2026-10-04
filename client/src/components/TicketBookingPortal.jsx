@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Train, Calendar, User, ArrowRight, ShieldCheck, Zap, CreditCard, ChevronRight, CheckCircle2, ArrowLeftRight, Check, Sparkles, MapPin, Building, Info, Flame, ThumbsUp, X } from 'lucide-react';
 import { api } from '../services/api';
+import stationService from '../services/stationService';
 
 const POPULAR_CHIPS = [
   { code: 'GZB', name: 'Ghaziabad' },
@@ -46,19 +47,14 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
   const fromRef = useRef(null);
   const toRef = useRef(null);
 
-  // Load all stations on mount
+  // Load all 9,000+ Indian Railway stations on mount from local stationService
   useEffect(() => {
-    const loadStations = async () => {
-      try {
-        const data = await api.getStations();
-        if (data.stations && data.stations.length > 0) {
-          setAllStations(data.stations);
-        }
-      } catch (e) {
-        console.error('Error fetching stations:', e);
+    setAllStations(stationService.getAllStations());
+    stationService.initStationData().then((list) => {
+      if (list && list.length > 0) {
+        setAllStations(list);
       }
-    };
-    loadStations();
+    });
   }, []);
 
   // Close dropdowns when clicking outside
@@ -111,21 +107,9 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
     setToInputText(tempText);
   };
 
-  // Station Filter helper
+  // Station Filter helper using stationService with fast in-memory ranking
   const getFilteredStations = (inputStr) => {
-    const q = (inputStr || '').toLowerCase().trim();
-    if (!q) return allStations.slice(0, 8);
-    const matches = allStations.filter(
-      (s) =>
-        s.code.toLowerCase().includes(q) ||
-        s.name.toLowerCase().includes(q) ||
-        (s.city && s.city.toLowerCase().includes(q)) ||
-        (s.state && s.state.toLowerCase().includes(q))
-    );
-    if (matches.length === 0 && q.length >= 2 && q.length <= 5) {
-      return [{ code: q.toUpperCase(), name: `${q.toUpperCase()} Station`, city: q.toUpperCase(), state: 'Indian Railways' }];
-    }
-    return matches.slice(0, 10);
+    return stationService.searchStations(inputStr, 15);
   };
 
   const handleSelectFrom = (s) => {
@@ -141,12 +125,13 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
   };
 
   const handleChipClick = (s) => {
+    const full = stationService.getStationByCode(s.code) || s;
     if (fromStation !== s.code) {
       setToStation(s.code);
-      setToInputText(`${s.name} (${s.code})`);
+      setToInputText(`${full.name} (${s.code})`);
     } else {
       setFromStation(s.code);
-      setFromInputText(`${s.name} (${s.code})`);
+      setFromInputText(`${full.name} (${s.code})`);
     }
   };
 
@@ -236,13 +221,15 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                 value={fromInputText}
                 onFocus={() => setShowFromDropdown(true)}
                 onChange={(e) => {
-                  setFromInputText(e.target.value);
+                  const val = e.target.value;
+                  setFromInputText(val);
                   setShowFromDropdown(true);
-                  if (e.target.value.trim().length <= 5 && e.target.value.trim().length >= 2) {
-                    setFromStation(e.target.value.trim().toUpperCase());
+                  const matched = stationService.getStationByCode(val);
+                  if (matched) {
+                    setFromStation(matched.code);
                   }
                 }}
-                placeholder="Search any station (e.g. GZB, Delhi, NDLS, CNB)..."
+                placeholder="Search any station (e.g. GZB, Delhi, NDLS, CNB, KYN)..."
                 className="w-full pl-10 pr-8 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500 font-medium"
               />
               <Search className="w-4 h-4 text-orange-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -262,8 +249,9 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
             {/* From Station Autocomplete Dropdown */}
             {showFromDropdown && (
               <div className="absolute top-full left-0 right-0 mt-2 z-30 max-h-64 overflow-y-auto rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-md p-1.5 space-y-1">
-                <div className="px-2 py-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Select Any Indian Railway Station
+                <div className="px-2 py-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
+                  <span>Indian Railway Stations</span>
+                  <span className="text-[9px] text-orange-400/80">All 9,000+ Stations</span>
                 </div>
                 {getFilteredStations(fromInputText).map((s) => (
                   <button
@@ -278,11 +266,15 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                           {s.code}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400">
-                        {s.city || s.state} {s.zone ? `• ${s.zone}` : ''}
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span>{s.city ? `${s.city}, ` : ''}{s.state}</span>
+                        {s.zone && <span>• {s.zone}</span>}
+                        {s.lat && s.lng && (
+                          <span className="text-slate-500 font-mono text-[9px]">({s.lat.toFixed(2)}°, {s.lng.toFixed(2)}°)</span>
+                        )}
                       </div>
                     </div>
-                    {fromStation === s.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                    {fromStation === s.code && <Check className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
                   </button>
                 ))}
               </div>
@@ -312,13 +304,15 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                 value={toInputText}
                 onFocus={() => setShowToDropdown(true)}
                 onChange={(e) => {
-                  setToInputText(e.target.value);
+                  const val = e.target.value;
+                  setToInputText(val);
                   setShowToDropdown(true);
-                  if (e.target.value.trim().length <= 5 && e.target.value.trim().length >= 2) {
-                    setToStation(e.target.value.trim().toUpperCase());
+                  const matched = stationService.getStationByCode(val);
+                  if (matched) {
+                    setToStation(matched.code);
                   }
                 }}
-                placeholder="Search any destination (e.g. BGP, Mumbai, MMCT, BSB)..."
+                placeholder="Search any destination (e.g. BGP, Mumbai, MMCT, BSB, PUNE)..."
                 className="w-full pl-10 pr-8 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500 font-medium"
               />
               <Search className="w-4 h-4 text-orange-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -338,8 +332,9 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
             {/* To Station Autocomplete Dropdown */}
             {showToDropdown && (
               <div className="absolute top-full left-0 right-0 mt-2 z-30 max-h-64 overflow-y-auto rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-md p-1.5 space-y-1">
-                <div className="px-2 py-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Select Any Destination Station
+                <div className="px-2 py-1 text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
+                  <span>Indian Railway Stations</span>
+                  <span className="text-[9px] text-orange-400/80">All 9,000+ Stations</span>
                 </div>
                 {getFilteredStations(toInputText).map((s) => (
                   <button
@@ -354,11 +349,15 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                           {s.code}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400">
-                        {s.city || s.state} {s.zone ? `• ${s.zone}` : ''}
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span>{s.city ? `${s.city}, ` : ''}{s.state}</span>
+                        {s.zone && <span>• {s.zone}</span>}
+                        {s.lat && s.lng && (
+                          <span className="text-slate-500 font-mono text-[9px]">({s.lat.toFixed(2)}°, {s.lng.toFixed(2)}°)</span>
+                        )}
                       </div>
                     </div>
-                    {toStation === s.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                    {toStation === s.code && <Check className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
                   </button>
                 ))}
               </div>

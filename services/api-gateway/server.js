@@ -46,10 +46,12 @@ async function proxyRequest(targetBaseUrl, req, res) {
       return res.status(response.status).send(text);
     }
   } catch (err) {
-    console.error(`[GATEWAY-ERR] Forwarding failed to ${targetUrl}:`, err.message);
+    const causeMsg = err.cause ? (err.cause.message || JSON.stringify(err.cause)) : '';
+    console.error(`[GATEWAY-ERR] Forwarding failed to ${targetUrl}:`, err.message, causeMsg);
     res.status(503).json({
       error: `Downstream microservice unreachable: ${targetUrl}`,
       details: err.message,
+      cause: causeMsg,
       gatewayTimestamp: new Date().toISOString()
     });
   }

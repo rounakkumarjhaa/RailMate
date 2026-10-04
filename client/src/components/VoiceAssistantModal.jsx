@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Globe, Sparkles, X, ArrowUpRight, Check, Bot, BrainCircuit, Send, Heart, MapPin, TrainTrack, Route } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Globe, Sparkles, X, ArrowUpRight, Check, Bot, BrainCircuit, Send, Heart, MapPin, TrainTrack, Route, Zap, Clock } from 'lucide-react';
 import { api } from '../services/api';
 import { humanVoice } from '../services/humanVoice';
 
@@ -34,16 +34,16 @@ export default function VoiceAssistantModal({ isOpen, onClose, onNavigateTab }) 
 
   const samplePrompts = {
     'hi-IN': [
-      'गाजियाबाद से भागलपुर का ट्रेन रूट क्या है?',
-      '12368 विक्रमशिला एक्सप्रेस के मुख्य स्टॉपेज',
-      'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन',
+      'गाजियाबाद से भागलपुर: सबसे तेज़ ट्रेन, टाइमिंग और रूट',
+      'दिल्ली से मुंबई: सबसे तेज़ ट्रेन और टाइमिंग',
+      'मुंबई से गोवा: सबसे तेज़ ट्रेन और रूट',
       '12952 तेजस राजधानी कहां पहुंची है?',
       'PNR 2849102941 का स्टेटस'
     ],
     'en-IN': [
-      'What is the train route from Ghaziabad to Bhagalpur?',
-      'Show stoppage stations of 12368 Vikramshila Express',
-      'What is the complete route from Delhi to Mumbai?',
+      'Fastest train, timing & route from Ghaziabad to Bhagalpur',
+      'Fastest train & timings from Delhi to Mumbai',
+      'Fastest train & timing from Mumbai to Goa',
       'Where is train 12952 right now?',
       'Check PNR 2849102941 status'
     ],
@@ -494,20 +494,67 @@ export default function VoiceAssistantModal({ isOpen, onClose, onNavigateTab }) 
                   {responseResult.spokenResponse}
                 </p>
 
-                {/* Detailed Route Card if available */}
+                {/* Detailed Route Card with Fastest Train and Timings */}
                 {responseResult.routeDetails && (
-                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-700 space-y-1.5 text-xs text-slate-300">
-                    <div className="flex items-center gap-1.5 font-bold text-orange-400">
-                      <Route className="w-3.5 h-3.5" /> {responseResult.routeDetails.name}
+                  <div className="p-3.5 rounded-2xl bg-slate-900/95 border border-emerald-500/30 space-y-2.5 text-xs text-slate-300 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold text-white text-sm">
+                        <Route className="w-4 h-4 text-emerald-400" /> {responseResult.routeDetails.name}
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 uppercase tracking-wide">
+                        Fastest Route
+                      </span>
                     </div>
-                    <div>
-                      <strong>Distance & Duration:</strong> {responseResult.routeDetails.distance} ({responseResult.routeDetails.duration})
+
+                    {/* Fastest Train Highlight Box */}
+                    {responseResult.routeDetails.fastestTrain && (
+                      <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-blue-500/10 border border-amber-500/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs">
+                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Fastest Train: {responseResult.routeDetails.fastestTrain.name || responseResult.routeDetails.fastestTrain.trainName}
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-semibold">
+                            {responseResult.routeDetails.fastestTrain.number || responseResult.routeDetails.fastestTrain.trainNumber}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                          <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                            <span className="text-[9px] text-slate-400 block font-medium">Departure</span>
+                            <span className="font-bold text-emerald-400">
+                              {responseResult.routeDetails.fastestTrain.departure}
+                            </span>
+                          </div>
+                          <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                            <span className="text-[9px] text-slate-400 block font-medium">Arrival</span>
+                            <span className="font-bold text-blue-400">
+                              {responseResult.routeDetails.fastestTrain.arrival}
+                            </span>
+                          </div>
+                          <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                            <span className="text-[9px] text-slate-400 block font-medium">Travel Time</span>
+                            <span className="font-bold text-amber-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-400" /> {responseResult.routeDetails.fastestTrain.duration}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-300 px-0.5">
+                      <span><strong>Total Distance:</strong> {responseResult.routeDetails.distance}</span>
+                      <span><strong>Corridor Duration:</strong> {responseResult.routeDetails.duration}</span>
                     </div>
-                    <div className="text-[11px] text-slate-300">
-                      <strong>Major Halts:</strong> {responseResult.routeDetails.majorHalts}
-                    </div>
+
+                    {responseResult.routeDetails.majorHalts && (
+                      <div className="text-[11px] text-slate-300 pt-1.5 border-t border-slate-800/80">
+                        <strong className="text-slate-400 block mb-0.5">Major Halts:</strong>
+                        <span className="text-slate-200 leading-relaxed">{responseResult.routeDetails.majorHalts}</span>
+                      </div>
+                    )}
+
                     {responseResult.routeDetails.scenicTip && (
-                      <div className="text-[11px] text-emerald-400 font-medium">
+                      <div className="text-[11px] text-emerald-400 font-medium pt-1">
                         🌲 <em>{responseResult.routeDetails.scenicTip}</em>
                       </div>
                     )}

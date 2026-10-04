@@ -1,0 +1,30 @@
+{
+  "name": "railmate",
+  "version": "1.0.0",
+  "description": "Microservices-based Indian Railways Smart Travel Assistant",
+  "main": "orchestrator.js",
+  "type": "module",
+  "scripts": {
+    "start": "node orchestrator.js",
+    "dev:backend": "node orchestrator.js",
+    "dev:client": "cd client && npm run dev",
+    "build:client": "cd client && npm run build",
+    "test:services": "node test-services.js"
+  },
+  "keywords": [
+    "indian-railways",
+    "confirmtkt",
+    "where-is-my-train",
+    "pnr-status",
+    "upi-payments",
+    "sarvam-ai",
+    "microservices"
+  ],
+  "author": "RailMate Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

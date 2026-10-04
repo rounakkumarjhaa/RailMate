@@ -96,23 +96,23 @@ async function runE2ETests() {
   const journey = await journeyRes.json();
   console.log('10. Live Journey Sharing Link:', journey.shareUrl, 'WhatsApp URL:', journey.whatsappUrl.slice(0, 50) + '...');
 
-  // 11. Sarvam AI Indic NLP
+  // 11. Sarvam AI Indic NLP & Route Intelligence
   const voiceRes = await fetch(`${GATEWAY}/api/voice-ai/process-query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: 'मेरी ट्रेन 12952 कहां पहुंची है?', languageCode: 'hi-IN' })
+    body: JSON.stringify({ query: 'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन क्या हैं?', languageCode: 'hi-IN' })
   });
   const voice = await voiceRes.json();
-  console.log('11. Sarvam AI NLP Intent:', voice.intent, 'Spoken Audio Response:', voice.spokenResponse);
+  console.log('11. Route & Travel AI Intent:', voice.intent, 'Engine:', voice.engine, 'Spoken Response:', voice.spokenResponse.slice(0, 80) + '...');
 
-  // 12. Google Gemini Conversational Intelligence
-  const geminiRes = await fetch(`${GATEWAY}/api/voice-ai/gemini-chat`, {
+  // 12. ChatGPT & Google Gemini Conversational Intelligence
+  const geminiRes = await fetch(`${GATEWAY}/api/voice-ai/chat-assistant`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: 'Explain senior citizen lower berth quota rules on Indian Railways', languageCode: 'en-IN' })
+    body: JSON.stringify({ prompt: 'Explain Mumbai to Goa scenic Konkan route and key stoppage stations', languageCode: 'en-IN' })
   });
   const gemini = await geminiRes.json();
-  console.log('12. Google Gemini API Assistant Reply:', gemini.reply.slice(0, 75) + '...', 'Model:', gemini.model);
+  console.log('12. ChatGPT & Gemini API Reply:', gemini.reply.slice(0, 80) + '...', 'Model:', gemini.model);
 
   console.log('--- ALL 12 END-TO-END GATEWAY TESTS PASSED! ---');
 }

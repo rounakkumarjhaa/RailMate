@@ -193,23 +193,27 @@ export const api = {
     return await res.json();
   },
 
-  // Voice AI & Sarvam
-  async processVoiceQuery(query, languageCode) {
+  // Voice AI, ChatGPT & Google Gemini API
+  async processVoiceQuery(query, languageCode, preferredModel = 'chatgpt') {
     const res = await fetch(`${API_BASE}/voice-ai/process-query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, languageCode })
+      body: JSON.stringify({ query, languageCode, preferredModel })
     });
     return await res.json();
   },
 
-  async askGeminiChat(prompt, languageCode) {
-    const res = await fetch(`${API_BASE}/voice-ai/gemini-chat`, {
+  async askAiChat(prompt, languageCode) {
+    const res = await fetch(`${API_BASE}/voice-ai/chat-assistant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, languageCode })
     });
     return await res.json();
+  },
+
+  async askGeminiChat(prompt, languageCode) {
+    return this.askAiChat(prompt, languageCode);
   },
 
   async getSupportedLanguages() {

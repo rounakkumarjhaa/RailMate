@@ -22,6 +22,25 @@ const POPULAR_CHIPS = [
   { code: 'KOTA', name: 'Kota' }
 ];
 
+export const formatTo12Hour = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return '--';
+  const clean = timeStr.trim();
+  if (clean.toUpperCase().includes('AM') || clean.toUpperCase().includes('PM')) {
+    return clean;
+  }
+  const parts = clean.split(':');
+  if (parts.length >= 2) {
+    let hours = parseInt(parts[0], 10);
+    const mins = parts[1].slice(0, 2).padStart(2, '0');
+    if (isNaN(hours)) return clean;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    return `${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+  }
+  return clean;
+};
+
 export default function TicketBookingPortal({ user, onOpenUpiModal }) {
   const [allStations, setAllStations] = useState([]);
   const [fromStation, setFromStation] = useState('GZB');
@@ -95,7 +114,7 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
 
   useEffect(() => {
     searchTrains();
-  }, [fromStation, toStation]);
+  }, [fromStation, toStation, journeyDate]);
 
   // Swap From and To stations
   const handleSwapStations = () => {
@@ -192,17 +211,8 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
       <div className="glass-panel rounded-3xl p-6 relative overflow-hidden border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold mb-2">
-              <Zap className="w-3.5 h-3.5" /> Direct IRCTC Partner Gateway & ConfirmTkt API Integration
-            </div>
             <h2 className="text-2xl font-bold text-white">Search & Reserve Train Seats</h2>
-            <p className="text-xs text-slate-400">Direct integration with IRCTC partner gateway & instant UPI checkout</p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> ConfirmTkt ML Active
-            </span>
+            <p className="text-xs text-slate-400 mt-1">Instant ticket reservation with zero gateway fees & direct UPI checkout</p>
           </div>
         </div>
 
@@ -444,30 +454,39 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                   </span>
                   {t.confirmTkt && (
                     <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-emerald-400" /> ConfirmTkt: {t.confirmTkt.probabilityScore}% Chance
+                      <Zap className="w-3 h-3 text-emerald-400" /> {t.confirmTkt.probabilityScore}% Clearance Chance
+                    </span>
+                  )}
+                  {t.runsOnRequestedDate ? (
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30 font-mono flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-400" /> Runs on {journeyDate}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">
+                      Runs Alternate Days
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-slate-400 mt-1">
-                  Runs Daily • Pantry Car {t.pantry_available ? 'Available' : 'No'} • High On-Time Record (98%)
+                  {t.runningDays === '1111111' ? 'Runs Daily' : (t.runsOnRequestedDate ? `Confirmed Run on ${journeyDate}` : 'Operates on Alternate Days')} • Pantry Car {t.pantry_available ? 'Available' : 'No'}
                 </div>
               </div>
 
-              {/* Timing */}
+              {/* Timing in 12-Hour AM/PM Format */}
               <div className="flex items-center gap-6 font-mono">
                 <div>
-                  <div className="text-xl font-bold text-white">{t.departure_time}</div>
-                  <div className="text-[11px] text-slate-400">{fromStation}</div>
+                  <div className="text-xl font-bold text-white tracking-tight">{formatTo12Hour(t.departure_time)}</div>
+                  <div className="text-[11px] text-slate-400">{t.from_code || fromStation}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[10px] text-slate-400 font-sans">{t.duration}</div>
+                  <div className="text-[10px] text-slate-400 font-sans font-semibold">{t.duration}</div>
                   <div className="w-16 h-0.5 bg-slate-700 my-1 relative">
                     <div className="absolute right-0 -top-1 w-2 h-2 rounded-full bg-orange-500" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-white">{t.arrival_time}</div>
-                  <div className="text-[11px] text-slate-400">{toStation}</div>
+                  <div className="text-xl font-bold text-white tracking-tight">{formatTo12Hour(t.arrival_time)}</div>
+                  <div className="text-[11px] text-slate-400">{t.to_code || toStation}</div>
                 </div>
               </div>
             </div>
@@ -499,14 +518,14 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                     </div>
                     <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5 text-orange-400" />
-                      <span>{info.prob}% ConfirmTkt</span>
+                      <span>{info.prob}% Chance</span>
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            {/* Action Bar & ConfirmTkt Partner Verification */}
+            {/* Action Bar & Partner Verification */}
             {selectedTrain?.number === t.number && (
               <div className="mt-5 pt-4 border-t border-slate-800/80 animate-in fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/90 border border-orange-500/30">
@@ -516,7 +535,7 @@ export default function TicketBookingPortal({ user, onOpenUpiModal }) {
                         Selected: Class {selectedClass} on Train {t.number}
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                        ConfirmTkt Verified
+                        Verified Available
                       </span>
                     </div>
                     <div className="text-sm text-slate-200 mt-1">

@@ -85,6 +85,24 @@ export const api = {
     }
   },
 
+  async searchTrainsCatalog(query = '') {
+    try {
+      const res = await fetch(`${API_BASE}/railway/trains?q=${encodeURIComponent(query)}`);
+      return await res.json();
+    } catch (e) {
+      return { success: false, trains: [] };
+    }
+  },
+
+  async getTrainRoute(trainNumber) {
+    try {
+      const res = await fetch(`${API_BASE}/railway/train-route/${encodeURIComponent(trainNumber)}`);
+      return await res.json();
+    } catch (e) {
+      return { success: false, route: [] };
+    }
+  },
+
   async getPnrStatus(pnrNumber) {
     try {
       const res = await fetch(`${API_BASE}/railway/pnr/${pnrNumber}`);
@@ -170,6 +188,28 @@ export const api = {
 
   async searchGooglePlaces(query, stationCode) {
     const res = await fetch(`${API_BASE}/destinations/google-places-search?query=${encodeURIComponent(query)}&stationCode=${stationCode || 'NDLS'}`);
+    return await res.json();
+  },
+
+  async getPlacesToVisit(query = '', destinationId = '', city = '') {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (destinationId && destinationId !== 'all') params.append('destination', destinationId);
+    if (city) params.append('city', city);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/destinations/places-to-visit${queryString}`);
+    return await res.json();
+  },
+
+  async getNearbyFamousPlaces(stationCode = '', maxDistanceKm = null, query = '', category = '', sortBy = 'distance') {
+    const params = new URLSearchParams();
+    if (stationCode && stationCode !== 'ALL') params.append('stationCode', stationCode);
+    if (maxDistanceKm) params.append('maxDistanceKm', String(maxDistanceKm));
+    if (query) params.append('q', query);
+    if (category && category !== 'all') params.append('category', category);
+    if (sortBy) params.append('sortBy', sortBy);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/destinations/nearby-places${queryString}`);
     return await res.json();
   },
 

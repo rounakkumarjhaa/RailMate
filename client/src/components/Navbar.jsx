@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Train, Mic, Server, Globe, User, ShieldCheck, Wifi, WifiOff, Coins } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Train, Mic, Server, Globe, User, ShieldCheck, Wifi, WifiOff, Coins, Sun, Moon, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { TRANSLATIONS } from '../data/translations';
+import { soundService } from '../services/soundService';
 
 export default function Navbar({
   activeTab,
@@ -11,9 +12,40 @@ export default function Navbar({
   onOpenHealth,
   selectedLang,
   setSelectedLang,
-  isOnline
+  isOnline,
+  theme = 'dark',
+  onToggleTheme
 }) {
   const t = TRANSLATIONS[selectedLang] || TRANSLATIONS['hi-IN'];
+  const [isTrainSoundPlaying, setIsTrainSoundPlaying] = useState(soundService.isTrainSoundPlaying);
+  const [isClickSoundEnabled, setIsClickSoundEnabled] = useState(soundService.isClickSoundEnabled);
+  const [soundVolume, setSoundVolume] = useState(soundService.volume);
+  const [isSoundMenuOpen, setIsSoundMenuOpen] = useState(false);
+  const soundMenuRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = soundService.subscribe(({ isPlaying, isClickEnabled, volume }) => {
+      setIsTrainSoundPlaying(isPlaying);
+      setIsClickSoundEnabled(isClickEnabled);
+      setSoundVolume(volume);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Close sound dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (soundMenuRef.current && !soundMenuRef.current.contains(e.target)) {
+        setIsSoundMenuOpen(false);
+      }
+    };
+    if (isSoundMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isSoundMenuOpen]);
 
   const navItems = [
     { id: 'tracker', label: t.nav.tracking, icon: '🚆' },
@@ -42,7 +74,7 @@ export default function Navbar({
           <div className="flex items-center gap-2 truncate">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             <span className="truncate">
-              🟢 12952 Tejas Rajdhani running on time • 🍛 Seat delivery live at Kota Jnr • ⚡ Direct UPI Zero Fee • 🎙️ Sarvam AI Indic Voice active
+              🟢 12952 Tejas Rajdhani running on time • 🍛 Seat delivery live at Kota Jnr • ⚡ Direct UPI Zero Fee • 🎙️ AI Voice Assistant active
             </span>
           </div>
 
@@ -114,14 +146,14 @@ export default function Navbar({
           {/* Controls: Voice, Health, Language, User */}
           <div className="flex items-center gap-2">
             
-            {/* Sarvam Voice Button */}
+            {/* AI Voice Assistant Button */}
             <button
               onClick={onOpenVoice}
               className="p-2 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 border border-orange-500/30 text-orange-400 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-              title="Open Voice Assistant"
+              title="Open AI Voice Assistant"
             >
               <Mic className="w-4 h-4 text-orange-400 animate-pulse" />
-              <span className="hidden sm:inline">Gemini + Sarvam AI</span>
+              <span className="hidden sm:inline">AI Voice Assistant</span>
             </button>
 
             {/* Microservices Status Indicator */}
@@ -132,7 +164,6 @@ export default function Navbar({
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <Server className="w-4 h-4 text-slate-400" />
-              <span className="hidden xl:inline">8 Services UP</span>
             </button>
 
             {/* Language Selector */}
@@ -150,6 +181,156 @@ export default function Navbar({
               </select>
               <Globe className="w-3.5 h-3.5 text-orange-400 absolute left-2.5 top-2.5 pointer-events-none" />
             </div>
+
+            {/* Train Sound Ambient & Click Controls */}
+            <div className="relative" ref={soundMenuRef}>
+              <div className="flex items-center rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 p-0.5 shadow-sm">
+                <button
+                  onClick={() => soundService.toggleTrainSound()}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    isTrainSoundPlaying
+                      ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25 ring-1 ring-orange-400'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                  title={isTrainSoundPlaying ? 'Mute Train Running Sound' : 'Play Train Running Sound'}
+                  aria-label="Toggle train running track sound"
+                >
+                  {isTrainSoundPlaying ? (
+                    <>
+                      <div className="flex items-center gap-0.5 h-3">
+                        <span className="w-0.5 h-2 bg-white animate-pulse rounded-full" />
+                        <span className="w-0.5 h-3.5 bg-white animate-pulse rounded-full" />
+                        <span className="w-0.5 h-1.5 bg-white animate-pulse rounded-full" />
+                      </div>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline font-bold">Train Sound</span>
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="hidden sm:inline text-slate-400">Train Sound</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setIsSoundMenuOpen(!isSoundMenuOpen)}
+                  className="px-1.5 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  title="Audio Settings & Train Horn"
+                  aria-label="Open audio settings"
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isSoundMenuOpen ? 'rotate-180 text-orange-400' : ''}`} />
+                </button>
+              </div>
+
+              {/* Sound Controls Popover Dropdown */}
+              {isSoundMenuOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 z-50 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center gap-1.5 text-white font-bold text-xs">
+                      <Train className="w-4 h-4 text-orange-400" />
+                      <span>RailMate Audio Experience</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 font-mono font-semibold">
+                      Web Audio
+                    </span>
+                  </div>
+
+                  {/* 1. Train Running Track Sound */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold text-white">Train Running Track Sound</div>
+                      <div className="text-[10px] text-slate-400">Rhythmic rail clatter & engine rumble</div>
+                    </div>
+                    <button
+                      onClick={() => soundService.toggleTrainSound()}
+                      className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
+                        isTrainSoundPlaying ? 'bg-orange-500' : 'bg-slate-800'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                          isTrainSoundPlaying ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* 2. UI Click Sound */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold text-white">Interactive Click Sounds</div>
+                      <div className="text-[10px] text-slate-400">Tactile audio feedback on clicking</div>
+                    </div>
+                    <button
+                      onClick={() => soundService.toggleClickSound()}
+                      className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
+                        isClickSoundEnabled ? 'bg-orange-500' : 'bg-slate-800'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                          isClickSoundEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* 3. Master Volume Slider */}
+                  {isTrainSoundPlaying && (
+                    <div className="space-y-1.5 pt-1 border-t border-slate-800/80">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-400">Ambience Volume</span>
+                        <span className="text-orange-400 font-mono font-bold">{Math.round(soundVolume * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.05"
+                        max="1.0"
+                        step="0.05"
+                        value={soundVolume}
+                        onChange={(e) => soundService.setVolume(parseFloat(e.target.value))}
+                        className="w-full accent-orange-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                      />
+                    </div>
+                  )}
+
+                  {/* 4. Locomotive Horn */}
+                  <div className="pt-2 border-t border-slate-800">
+                    <button
+                      onClick={() => soundService.playTrainHorn()}
+                      className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700/80 group"
+                    >
+                      <span>📢</span>
+                      <span>Honk Train Horn (WAP-7)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Light / Dark Theme Mode Toggle */}
+            <button
+              onClick={onToggleTheme}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm group"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle light or dark theme mode"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+                  <span className="hidden md:inline text-amber-300 font-medium">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-blue-500 group-hover:-rotate-12 transition-transform duration-300" />
+                  <span className="hidden md:inline text-slate-700 font-bold">Dark</span>
+                </>
+              )}
+            </button>
 
             {/* User Profile / Auth */}
             <button

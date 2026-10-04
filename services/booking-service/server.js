@@ -88,7 +88,7 @@ function calculateProbability({ wlNumber, bookingClass, daysUntilJourney, quota 
   if (probability < 45) {
     badge = 'LOW';
     badgeColor = 'rose';
-    analysis = `High waiting list of ${wl} with only ${days} days left. ConfirmTkt recommends opting for Vande Bharat or Tatkal quota.`;
+    analysis = `High waiting list of ${wl} with only ${days} days left. Recommendation: opt for alternative trains or Tatkal quota.`;
   } else if (probability < 75) {
     badge = 'MEDIUM';
     badgeColor = 'amber';

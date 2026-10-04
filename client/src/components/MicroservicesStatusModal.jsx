@@ -30,12 +30,12 @@ export default function MicroservicesStatusModal({ isOpen, onClose }) {
 
   const servicesList = [
     { key: 'auth', name: 'Auth & User Service', port: 5001, desc: 'JWT, Mobile OTP, Profile & Saved Passengers' },
-    { key: 'railway', name: 'Railway & Live GPS Service', port: 5002, desc: 'WhereIsMyTrain Real-time Telemetry, ConfirmTkt PNR' },
-    { key: 'booking', name: 'Booking & UPI Payments', port: 5003, desc: 'Seat Availability, Confirmation ML, Direct UPI QR' },
-    { key: 'food', name: 'Food & e-Catering Service', port: 5004, desc: 'Zomato / IRCTC Station Menus & Seat Delivery' },
-    { key: 'destinations', name: 'Destinations & Places Service', port: 5005, desc: 'Google Places API, Itineraries & Photo Checklist' },
+    { key: 'railway', name: 'Railway & Live GPS Service', port: 5002, desc: 'Real-time GPS Telemetry, Live PNR Engine' },
+    { key: 'booking', name: 'Booking & UPI Payments', port: 5003, desc: 'Seat Availability, Confirmation Engine, Direct UPI QR' },
+    { key: 'food', name: 'Food & e-Catering Service', port: 5004, desc: 'Station Menus & Direct Seat Delivery' },
+    { key: 'destinations', name: 'Destinations & Places Service', port: 5005, desc: 'Famous Attractions, Itineraries & Photo Checklist' },
     { key: 'journey', name: 'Journey Sharing Service', port: 5006, desc: 'Real-time Telemetry, WhatsApp Link & RPF SOS' },
-    { key: 'voice-ai', name: 'Voice & Sarvam Indic NLP', port: 5007, desc: 'Sarvam AI Saaras STT & Bulbul Regional Voice' }
+    { key: 'voice-ai', name: 'AI Voice Assistant Service', port: 5007, desc: 'Neural Indic NLP, Real-time Speech-to-Text & Regional Voice Telemetry' }
   ];
 
   return (

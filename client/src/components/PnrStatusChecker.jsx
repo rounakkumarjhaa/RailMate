@@ -46,9 +46,6 @@ export default function PnrStatusChecker({ onNavigateTab }) {
       <div className="glass-panel rounded-3xl p-6 relative overflow-hidden border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" /> ConfirmTkt & Indian Railways Direct PNR Engine
-            </div>
             <h2 className="text-2xl font-bold text-white">PNR Status & Confirmation Probability</h2>
             <p className="text-xs text-slate-400">Live coach allotment, berth type, charting updates & offline caching</p>
           </div>
@@ -97,8 +94,21 @@ export default function PnrStatusChecker({ onNavigateTab }) {
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {pnrInput && pnrInput.length === 10 && (
+            <a
+              href={`https://www.confirmtkt.com/pnr-status/${pnrInput}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto shrink-0 border border-slate-700"
+            >
+              Verify Live PNR ↗
+            </a>
+          )}
         </div>
       )}
 
@@ -114,16 +124,30 @@ export default function PnrStatusChecker({ onNavigateTab }) {
               <div className="flex items-center gap-3">
                 <Train className="w-6 h-6" />
                 <div>
-                  <div className="text-[10px] uppercase font-bold tracking-widest text-orange-200">Indian Railways E-Ticket</div>
+                  <div className="text-[10px] uppercase font-bold tracking-widest text-orange-200 flex items-center gap-2">
+                    <span>Indian Railways E-Ticket</span>
+                    {pnrData.isDemoMode && (
+                      <span className="px-2 py-0.5 rounded bg-black/30 text-amber-200 text-[9px] font-mono">Sample Preview</span>
+                    )}
+                  </div>
                   <div className="font-bold text-lg font-mono">{pnrData.trainNumber} - {pnrData.trainName}</div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="text-right">
                   <div className="text-[10px] uppercase text-orange-200">PNR NUMBER</div>
                   <div className="text-xl font-mono font-black tracking-widest">{pnrData.pnr}</div>
                 </div>
+                <a
+                  href={`https://www.confirmtkt.com/pnr-status/${pnrData.pnr}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-black/20 hover:bg-black/30 border border-white/20 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                  title="Verify Online"
+                >
+                  Live Portal ↗
+                </a>
               </div>
             </div>
 
@@ -163,7 +187,7 @@ export default function PnrStatusChecker({ onNavigateTab }) {
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-medium">ConfirmTkt ML Confirmation Probability</div>
+                  <div className="text-xs text-slate-400 font-medium">Confirmation Probability</div>
                   <div className="text-lg font-bold text-white flex items-center gap-2">
                     {pnrData.confirmationProbability}% Probability of Final Clearance
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -240,7 +264,7 @@ export default function PnrStatusChecker({ onNavigateTab }) {
           {pnrData.alternateOptions?.length > 0 && (
             <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-200 space-y-3">
               <div className="font-bold text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400" /> ConfirmTkt Smart Alternative Suggestions
+                <AlertTriangle className="w-4 h-4 text-amber-400" /> Smart Alternative Suggestions
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {pnrData.alternateOptions.map((opt, i) => (

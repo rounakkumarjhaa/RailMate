@@ -13,6 +13,7 @@ import UpiPaymentModal from './components/UpiPaymentModal';
 import JourneyShareModal from './components/JourneyShareModal';
 import { Mic, Share2, ShieldCheck, Database, WifiOff, PhoneCall, Train, Sparkles } from 'lucide-react';
 import { TRANSLATIONS } from './data/translations';
+import { soundService } from './services/soundService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('tracker');
@@ -22,13 +23,12 @@ export default function App() {
   // User state (demo user preset for frictionless immediate review)
   const [user, setUser] = useState({
     id: 'usr_demo_101',
-    name: 'Rajesh Kumar Sharma',
-    email: 'rajesh.sharma@railmate.in',
+    name: 'Rounak Kumar',
+    email: 'rounakkumar7717@gmail.com',
     phone: '+91 98765 43210',
     railCoins: 450,
     passengers: [
-      { id: 'p1', name: 'Rajesh Kumar Sharma', age: 34, gender: 'Male', berth_preference: 'Lower' },
-      { id: 'p2', name: 'Pooja Sharma', age: 31, gender: 'Female', berth_preference: 'Lower' }
+      { id: 'p1', name: 'Rounak Kumar', age: 24, gender: 'Male', berth_preference: 'Lower' }
     ]
   });
 
@@ -41,6 +41,34 @@ export default function App() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [shareTrainInfo, setShareTrainInfo] = useState(null);
 
+  // Light / Dark Theme State with persistence & system preference detection
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('railmate_theme');
+      if (saved) return saved;
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    localStorage.setItem('railmate_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   // Online / Offline state tracking
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -52,6 +80,21 @@ export default function App() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Global tactile UI click sound on interactive elements
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const interactive = e.target.closest('button, a, input[type="radio"], input[type="checkbox"], select, [role="button"], .cursor-pointer');
+      if (interactive) {
+        soundService.playClickSound();
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, { capture: true });
     };
   }, []);
 
@@ -68,7 +111,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-orange-500 selection:text-white">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} app-shell flex flex-col selection:bg-orange-500 selection:text-white transition-colors duration-200`}>
       
       {/* Top Navbar */}
       <Navbar
@@ -81,6 +124,8 @@ export default function App() {
         selectedLang={selectedLang}
         setSelectedLang={setSelectedLang}
         isOnline={isOnline}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Offline sync notification banner */}
@@ -123,7 +168,7 @@ export default function App() {
 
       </main>
 
-      {/* Floating Sarvam AI Voice Trigger Button */}
+      {/* Floating AI Voice Trigger Button */}
       <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2">
         <button
           onClick={() => setIsVoiceOpen(true)}
@@ -134,7 +179,7 @@ export default function App() {
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
           </div>
           <span className="font-semibold tracking-wide">
-            Gemini & Sarvam AI Voice Assistant
+            AI Voice Assistant
           </span>
           <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded text-orange-200 uppercase font-mono">
             {selectedLang.split('-')[0]}
@@ -143,7 +188,7 @@ export default function App() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-800/80 bg-slate-950 py-8 px-4 sm:px-6 text-slate-400 text-xs">
+      <footer className={`mt-auto border-t ${theme === 'dark' ? 'border-slate-800/80 bg-slate-950 text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'} py-8 px-4 sm:px-6 text-xs transition-colors`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center">
@@ -151,8 +196,8 @@ export default function App() {
             </div>
             <div>
               <div className="text-white font-bold text-sm">RailMate Microservices Travel Suite</div>
-              <div className="text-slate-500 text-[11px]">
-                Powered by ConfirmTkt API, Where Is My Train API, Zomato API, Google Places & Sarvam AI
+              <div className="text-slate-500 text-[11px] mt-0.5">
+                Powered by <span className="font-semibold text-orange-400">Rounak Kumar</span>
               </div>
             </div>
           </div>

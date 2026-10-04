@@ -19,7 +19,7 @@ export default function VoiceAssistantModal({ isOpen, onClose, onNavigateTab }) 
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'ai',
-      text: 'नमस्ते! मैं RailMate AI सहायक हूँ, जो ChatGPT API (GPT-4o) और Google Gemini द्वारा संचालित है। आप किसी भी ट्रेन के रूट, स्टॉपेज, टाइमिंग, सीट कन्फर्मेशन या सफर के बारे में कुछ भी पूछ सकते हैं!'
+      text: 'ट्रेन नंबर, रूट (जैसे गाजियाबाद से भागलपुर), स्टेशन या PNR पूछें — तुरंत प्रत्यक्ष मानवीय आवाज़ में उत्तर मिलेगा।'
     }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -34,18 +34,18 @@ export default function VoiceAssistantModal({ isOpen, onClose, onNavigateTab }) 
 
   const samplePrompts = {
     'hi-IN': [
-      'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन क्या हैं?',
-      '12952 तेजस राजधानी के कौन-कौन से स्टॉपेज हैं?',
-      'मुंबई से गोवा का कोंकण रेलवे रूट बताओ',
-      'वंदे भारत में सामान ले जाने के क्या नियम हैं?',
-      'कोटा स्टेशन पर महाराजा थाली ऑर्डर करो'
+      'गाजियाबाद से भागलपुर का ट्रेन रूट क्या है?',
+      '12368 विक्रमशिला एक्सप्रेस के मुख्य स्टॉपेज',
+      'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन',
+      '12952 तेजस राजधानी कहां पहुंची है?',
+      'PNR 2849102941 का स्टेटस'
     ],
     'en-IN': [
+      'What is the train route from Ghaziabad to Bhagalpur?',
+      'Show stoppage stations of 12368 Vikramshila Express',
       'What is the complete route from Delhi to Mumbai?',
-      'Show me all stoppage stations of 12952 Tejas Rajdhani',
-      'Tell me about Mumbai to Goa scenic Konkan route',
-      'What are luggage rules on Vande Bharat trains?',
-      'Check PNR 2849102941 confirmation status'
+      'Where is train 12952 right now?',
+      'Check PNR 2849102941 status'
     ],
     'ta-IN': [
       'தில்லி முதல் மும்பை ரயில் வழித்தடம் என்ன?',

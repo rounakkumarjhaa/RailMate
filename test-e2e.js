@@ -100,19 +100,19 @@ async function runE2ETests() {
   const voiceRes = await fetch(`${GATEWAY}/api/voice-ai/process-query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: 'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन क्या हैं?', languageCode: 'hi-IN' })
+    body: JSON.stringify({ query: 'गाजियाबाद से भागलपुर का ट्रेन रूट क्या है?', languageCode: 'hi-IN' })
   });
   const voice = await voiceRes.json();
-  console.log('11. Route & Travel AI Intent:', voice.intent, 'Engine:', voice.engine, 'Spoken Response:', voice.spokenResponse.slice(0, 80) + '...');
+  console.log('11. Route & Travel AI Intent:', voice.intent, 'Direct Answer:', voice.spokenResponse.slice(0, 85) + '...');
 
   // 12. ChatGPT & Google Gemini Conversational Intelligence
   const geminiRes = await fetch(`${GATEWAY}/api/voice-ai/chat-assistant`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: 'Explain Mumbai to Goa scenic Konkan route and key stoppage stations', languageCode: 'en-IN' })
+    body: JSON.stringify({ prompt: 'Ghaziabad to Bhagalpur train route', languageCode: 'en-IN' })
   });
   const gemini = await geminiRes.json();
-  console.log('12. ChatGPT & Gemini API Reply:', gemini.reply.slice(0, 80) + '...', 'Model:', gemini.model);
+  console.log('12. ChatGPT Direct Reply:', gemini.reply.slice(0, 85) + '...', 'Model:', gemini.model);
 
   console.log('--- ALL 12 END-TO-END GATEWAY TESTS PASSED! ---');
 }

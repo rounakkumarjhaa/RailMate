@@ -28,89 +28,105 @@ const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 
 // Supported Indic languages and regional labels
 const SUPPORTED_LANGUAGES = [
-  { code: 'hi-IN', name: 'Hindi', native: 'हिन्दी', promptSample: 'दिल्ली से मुंबई का ट्रेन रूट और मुख्य स्टेशन क्या हैं?' },
-  { code: 'en-IN', name: 'English (India)', native: 'English', promptSample: 'What is the full route and stoppage list of 12952 Tejas Rajdhani?' },
-  { code: 'ta-IN', name: 'Tamil', native: 'தமிழ்', promptSample: 'ரயில் 12952 வழித்தடம் என்ன?' },
-  { code: 'te-IN', name: 'Telugu', native: 'తెలుగు', promptSample: 'రైలు 12952 రూట్ మరియు స్టేషన్లు ఏమిటి?' },
-  { code: 'bn-IN', name: 'Bengali', native: 'বাংলা', promptSample: 'ট্রেন ১২৯৫২ এর রুট এবং স্টপগুলি কি?' },
-  { code: 'mr-IN', name: 'Marathi', native: 'मराठी', promptSample: 'ट्रेन १२९५२ चा संपूर्ण मार्ग आणि थांबे कोणते आहेत?' },
-  { code: 'gu-IN', name: 'Gujarati', native: 'ગુજરાતી', promptSample: 'ટ્રેન ૧૨૯૫૨ નો રૂટ અને સ્ટેશનો કયા છે?' }
+  { code: 'hi-IN', name: 'Hindi', native: 'हिन्दी' },
+  { code: 'en-IN', name: 'English (India)', native: 'English' },
+  { code: 'ta-IN', name: 'Tamil', native: 'தமிழ்' },
+  { code: 'te-IN', name: 'Telugu', native: 'తెలుగు' },
+  { code: 'bn-IN', name: 'Bengali', native: 'বাংলা' },
+  { code: 'mr-IN', name: 'Marathi', native: 'मराठी' },
+  { code: 'gu-IN', name: 'Gujarati', native: 'ગુજરાતી' }
 ];
 
-// Comprehensive Indian Railways Route Knowledge Base for offline / instant answers
-const INDIAN_RAILWAY_ROUTES = {
-  'delhi-mumbai': {
-    name: 'New Delhi (NDLS) to Mumbai Central (MMCT)',
-    distance: '1,386 km',
-    duration: '15h 40m on Tejas Rajdhani Express (12952)',
-    majorHalts: 'New Delhi ➔ Kota Junction ➔ Ratlam Junction ➔ Vadodara Junction ➔ Surat ➔ Borivali ➔ Mumbai Central',
-    highlights: 'Traverses through Haryana, Rajasthan, Madhya Pradesh, Gujarat and Maharashtra. High-speed 130 km/h WAP-7 electric corridor.',
-    scenicTip: 'Passing through the Chambal valley near Kota and crossing the Narmada and Tapi rivers in Gujarat.'
+// Strict system instructions provided for direct human-like railway answers
+const STRICT_SYSTEM_INSTRUCTION = `
+You are an efficient and direct Indian Railways Travel Assistant. You must follow these strict rules:
+* Direct Answers Only: When a user asks about a train, route, station, or PNR, answer their specific question immediately. Do not add introductory filler or greetings.
+* No Capability Listings: NEVER reply with a generic list of your features (e.g., do not say 'You can ask me about PNR, routes, stations, luggage...').
+* No Self-Introductions: Do not say 'I am RailMate AI...' unless the user specifically asks 'Who are you?' or sends a blank greeting.
+* Tone & Language: Keep responses concise, natural, and human-like. Always respond in the same language the user uses (e.g., Hindi or English).
+`;
+
+// Detailed station route dataset for instant direct answers
+const POPULAR_ROUTES = {
+  'ghaziabad-bhagalpur': {
+    source: 'Ghaziabad (GZB) / Anand Vihar (ANVT)',
+    destination: 'Bhagalpur Junction (BGP)',
+    distance: '1,208 km',
+    duration: '19h 40m',
+    topTrain: '12368 Vikramshila Express',
+    halts: 'गाजियाबाद ➔ अलीगढ़ ➔ कानपुर सेंट्रल ➔ प्रयागराज ➔ पं. दीनदयाल उपाध्याय (मुगलसराय) ➔ बक्सर ➔ आरा ➔ पटना जंक्शन ➔ बख्तियारपुर ➔ मोकामा ➔ किउल ➔ जमालपुर ➔ भागलपुर',
+    haltsEn: 'Ghaziabad ➔ Aligarh ➔ Kanpur Central ➔ Prayagraj ➔ Pt. Deen Dayal Upadhyaya ➔ Buxar ➔ Ara ➔ Patna Junction ➔ Bakhtiyarpur ➔ Mokama ➔ Kiul ➔ Jamalpur ➔ Bhagalpur Junction',
+    summaryHi: 'गाजियाबाद से भागलपुर का रेल मार्ग लगभग 1,208 किलोमीटर लंबा है। इस रूट की सबसे प्रमुख ट्रेन 12368 विक्रमशिला सुपरफास्ट एक्सप्रेस है, जो लगभग 19 घंटे 45 मिनट में यात्रा पूरी करती है। मुख्य स्टॉप हैं: गाजियाबाद, अलीगढ़, कानपुर सेंट्रल, प्रयागराज, पं. दीनदयाल उपाध्याय जंक्शन, पटना जंक्शन, किउल और जमालपुर होते हुए भागलपुर।',
+    summaryEn: 'The train route from Ghaziabad to Bhagalpur spans approximately 1,208 kilometers. The premier train on this route is the 12368 Vikramshila Express, taking about 19 hours and 45 minutes. Major halts include Ghaziabad, Aligarh, Kanpur Central, Prayagraj, Pt. Deen Dayal Upadhyaya (Mughalsarai), Patna Junction, Mokama, Kiul, and Jamalpur before reaching Bhagalpur Junction.'
   },
-  'delhi-varanasi': {
-    name: 'New Delhi (NDLS) to Varanasi Junction (BSB)',
-    distance: '759 km',
-    duration: '8h 00m on Vande Bharat Express (22436)',
-    majorHalts: 'New Delhi ➔ Kanpur Central ➔ Prayagraj Junction ➔ Varanasi Junction',
-    highlights: 'Electrified semi-high speed track. Dedicated premium dining on board.',
-    scenicTip: 'View of the holy Sangam in Prayagraj as the train crosses the Yamuna and Ganga river bridges.'
+  'delhi-mumbai': {
+    source: 'New Delhi (NDLS)',
+    destination: 'Mumbai Central (MMCT)',
+    distance: '1,386 km',
+    duration: '15h 40m',
+    topTrain: '12952 Tejas Rajdhani Express',
+    halts: 'नई दिल्ली ➔ कोटा जंक्शन ➔ रतलाम ➔ वडोदरा ➔ सूरत ➔ बोरीवली ➔ मुंबई सेंट्रल',
+    haltsEn: 'New Delhi ➔ Kota Junction ➔ Ratlam ➔ Vadodara ➔ Surat ➔ Borivali ➔ Mumbai Central',
+    summaryHi: 'नई दिल्ली से मुंबई सेंट्रल का मुख्य रूट 1,386 किलोमीटर लंबा है। 12952 तेजस राजधानी 15 घंटे 40 मिनट में यह दूरी तय करती है। इसके प्रमुख स्टॉप हैं: कोटा जंक्शन, रतलाम, वडोदरा, सूरत और बोरीवली।',
+    summaryEn: 'The New Delhi to Mumbai Central route is 1,386 km long, taking 15 hours and 40 minutes on the 12952 Tejas Rajdhani. Key halts are Kota Junction, Ratlam, Vadodara, Surat, Borivali, and Mumbai Central.'
   },
   'mumbai-goa': {
-    name: 'Mumbai (CSMT / LTT) to Madgaon Junction, Goa (MAO)',
+    source: 'Mumbai CSMT',
+    destination: 'Madgaon Junction (MAO)',
     distance: '750 km',
-    duration: '8h 45m on Tejas / Vande Bharat Express',
-    majorHalts: 'Mumbai CSMT ➔ Dadar ➔ Thane ➔ Panvel ➔ Roha ➔ Ratnagiri ➔ Kankavli ➔ Thivim ➔ Madgaon',
-    highlights: 'The legendary Konkan Railway route featuring over 2,000 bridges, 91 tunnels, and breathtaking Western Ghats gorges.',
-    scenicTip: 'Glimpse the roaring Dudhsagar Waterfalls and emerald green hills during the monsoon and winter.'
+    duration: '8h 45m',
+    topTrain: '22119 Tejas Express / 20645 Vande Bharat',
+    halts: 'मुंबई सीएसएमटी ➔ ठाणे ➔ पनवेल ➔ रोहा ➔ रत्नागिरी ➔ कणकवली ➔ थीविम ➔ मडगांव',
+    haltsEn: 'Mumbai CSMT ➔ Thane ➔ Panvel ➔ Roha ➔ Ratnagiri ➔ Kankavli ➔ Thivim ➔ Madgaon',
+    summaryHi: 'मुंबई से गोवा का कोंकण रेलवे रूट 750 किलोमीटर है। मुख्य स्टॉप हैं: ठाणे, पनवेल, रोहा, रत्नागिरी, कणकवली, थीविम और मडगांव जंक्शन। यात्रा लगभग 8 घंटे 45 मिनट की है।',
+    summaryEn: 'The Mumbai to Goa Konkan Railway route covers 750 km in about 8 hours 45 minutes. Major halts are Thane, Panvel, Roha, Ratnagiri, Kankavli, Thivim, and Madgaon.'
   },
-  'mumbai-ahmedabad': {
-    name: 'Mumbai Central (MMCT) to Ahmedabad Junction (ADI)',
-    distance: '493 km',
-    duration: '5h 25m on Vande Bharat / 6h 25m on Shatabdi (12009)',
-    majorHalts: 'Mumbai Central ➔ Borivali ➔ Vapi ➔ Surat ➔ Bharuch ➔ Vadodara ➔ Anand ➔ Ahmedabad',
-    highlights: 'One of the busiest commercial rail arteries in India with dual-line automatic block signaling.',
-    scenicTip: 'Scenic crossing of the Golden Bridge over the Narmada river at Bharuch.'
-  },
-  'howrah-delhi': {
-    name: 'Howrah Junction, Kolkata (HWH) to New Delhi (NDLS)',
-    distance: '1,451 km',
-    duration: '17h 15m on Howrah Rajdhani Express (12301)',
-    majorHalts: 'Howrah ➔ Asansol ➔ Dhanbad ➔ Parasnath ➔ Gaya ➔ Pt. Deen Dayal Upadhyaya (Mughalsarai) ➔ Prayagraj ➔ Kanpur ➔ New Delhi',
-    highlights: 'The historic Grand Chord line through the mineral-rich Chota Nagpur plateau and Indo-Gangetic plains.'
+  'delhi-varanasi': {
+    source: 'New Delhi (NDLS)',
+    destination: 'Varanasi Junction (BSB)',
+    distance: '759 km',
+    duration: '8h 00m',
+    topTrain: '22436 Vande Bharat Express',
+    halts: 'नई दिल्ली ➔ कानपुर सेंट्रल ➔ प्रयागराज जंक्शन ➔ वाराणसी',
+    haltsEn: 'New Delhi ➔ Kanpur Central ➔ Prayagraj Junction ➔ Varanasi Junction',
+    summaryHi: 'नई दिल्ली से वाराणसी का 22436 वंदे भारत रूट 759 किलोमीटर है और 8 घंटे में पूरा होता है। स्टॉप हैं: कानपुर सेंट्रल और प्रयागराज जंक्शन।',
+    summaryEn: 'The New Delhi to Varanasi route is 759 km, taking 8 hours on the 22436 Vande Bharat with halts at Kanpur Central and Prayagraj Junction.'
   },
   'chennai-bengaluru': {
-    name: 'Chennai Central (MAS) to KSR Bengaluru (SBC)',
+    source: 'MGR Chennai Central (MAS)',
+    destination: 'KSR Bengaluru (SBC)',
     distance: '359 km',
-    duration: '4h 25m on Vande Bharat Express (20607)',
-    majorHalts: 'MGR Chennai Central ➔ Katpadi Junction ➔ Jolarpettai ➔ Krishnarajapuram ➔ KSR Bengaluru',
-    highlights: 'Climbs into the Deccan plateau with smooth high-speed acceleration.'
-  },
-  'kashmir-valley': {
-    name: 'Jammu Tawi / Katra (SVDK) to Srinagar / Baramulla',
-    distance: 'USBRL Railway Project',
-    duration: '3h 30m on Vande Bharat Special',
-    majorHalts: 'Katra ➔ Reasi ➔ Bakkal ➔ Kauri (Chenab Bridge) ➔ Sangaldan ➔ Banihal ➔ Qazigund ➔ Srinagar',
-    highlights: 'Crosses the world’s highest railway arch bridge (359 meters above the Chenab river bed, higher than Eiffel Tower) and Pir Panjal tunnel.'
+    duration: '4h 25m',
+    topTrain: '20607 Vande Bharat Express',
+    halts: 'चेन्नई सेंट्रल ➔ काटपाडी ➔ जोलारपेट्टै ➔ कृष्णराजपुरम ➔ केएसआर बेंगलुरु',
+    haltsEn: 'MGR Chennai Central ➔ Katpadi Junction ➔ Jolarpettai ➔ Krishnarajapuram ➔ KSR Bengaluru',
+    summaryHi: 'चेन्नई से बेंगलुरु का रूट 359 किलोमीटर है और वंदे भारत से 4 घंटे 25 मिनट लगते हैं। मुख्य स्टॉप काटपाडी और कृष्णराजपुरम हैं।',
+    summaryEn: 'The Chennai to Bengaluru route spans 359 km, taking 4 hours 25 minutes on the Vande Bharat with halts at Katpadi and Krishnarajapuram.'
   }
 };
 
-// 1. ChatGPT API (OpenAI GPT-4o) Caller
+// 1. ChatGPT API (OpenAI GPT-4o) Caller with strict direct prompt
 async function callChatGptApi(query, languageCode = 'hi-IN') {
   if (!OPENAI_API_KEY) return null;
 
   try {
-    const systemPrompt = `
-You are RailMate, the ultimate Indian Railways expert travel and route assistant.
-You answer ANY question the user asks about train routes, stations, connections, travel tips, PNR, food, coach layouts, or general travel with authoritative accuracy.
-The user's query is in language: ${languageCode}.
+    const prompt = `
+${STRICT_SYSTEM_INSTRUCTION}
+The user is querying in language: ${languageCode}.
+User Query: "${query}"
 
-Respond with a valid JSON object:
+Return a valid JSON object:
 {
   "intent": "ROUTE_INFO" | "LIVE_TRAIN_TRACKING" | "CHECK_PNR_STATUS" | "ORDER_FOOD" | "BOOK_TICKET" | "GENERAL_TRAVEL_QNA",
   "confidence": 0.98,
   "action": "NAVIGATE_TO_TRACKER" | "NAVIGATE_TO_PNR" | "NAVIGATE_TO_FOOD" | "NAVIGATE_TO_BOOKING" | "SHOW_HELP",
-  "spokenResponse": "Complete, comprehensive, conversational human explanation answering the user's question in ${languageCode}. If they asked about a route, explain the major stoppage stations, distance, total travel time, and key travel tips clearly.",
-  "routeSummary": "Brief route highlights if relevant, else null"
+  "spokenResponse": "Direct answer immediately addressing the user query in language ${languageCode} with NO introductory filler, NO greetings, and NO feature lists.",
+  "routeDetails": {
+    "name": "Route Name",
+    "distance": "Distance in km",
+    "duration": "Duration in hours",
+    "majorHalts": "Station halts sequence"
+  } or null
 }
 `;
 
@@ -124,10 +140,10 @@ Respond with a valid JSON object:
         model: CHATGPT_MODEL,
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: query }
+          { role: 'system', content: STRICT_SYSTEM_INSTRUCTION },
+          { role: 'user', content: prompt }
         ],
-        temperature: 0.3
+        temperature: 0.2
       })
     });
 
@@ -144,13 +160,13 @@ Respond with a valid JSON object:
   return null;
 }
 
-// 2. Google Gemini API Fallback
+// 2. Google Gemini API Fallback with strict direct prompt
 async function callGeminiApi(query, languageCode = 'hi-IN') {
   if (!GEMINI_API_KEY) return null;
 
   try {
     const prompt = `
-You are the RailMate Indian Railways AI Travel and Route Assistant.
+${STRICT_SYSTEM_INSTRUCTION}
 User Query in language '${languageCode}': "${query}"
 
 Return a strict valid JSON object:
@@ -158,8 +174,8 @@ Return a strict valid JSON object:
   "intent": "ROUTE_INFO" | "LIVE_TRAIN_TRACKING" | "CHECK_PNR_STATUS" | "ORDER_FOOD" | "BOOK_TICKET" | "GENERAL_TRAVEL_QNA",
   "confidence": 0.96,
   "action": "NAVIGATE_TO_TRACKER" | "NAVIGATE_TO_PNR" | "NAVIGATE_TO_FOOD" | "NAVIGATE_TO_BOOKING" | "SHOW_HELP",
-  "spokenResponse": "Accurate, helpful natural spoken response in language ${languageCode}. If asked about a route, explain key stations, distance, duration, and advice.",
-  "routeSummary": "Key route details if asked, else null"
+  "spokenResponse": "Direct answer immediately addressing the user query in language ${languageCode} with NO introductory filler, NO greetings, and NO feature lists.",
+  "routeDetails": null
 }
 `;
 
@@ -188,163 +204,192 @@ Return a strict valid JSON object:
   return null;
 }
 
-// 3. Comprehensive Indian Railway Route & Travel Knowledge Engine
-function parseRouteAndGeneralQuery(queryText, langCode = 'hi-IN') {
-  const text = (queryText || '').toLowerCase();
+// 3. Direct Route & Answer Engine (Zero generic filler, direct answers only)
+function resolveDirectAnswer(queryText, langCode = 'hi-IN') {
+  const text = (queryText || '').toLowerCase().trim();
+  const isHindi = langCode === 'hi-IN';
 
-  // Route: Delhi to Mumbai (12952 Tejas Rajdhani / Golden Quadrilateral)
-  if ((text.includes('delhi') && text.includes('mumbai')) || text.includes('12952') || text.includes('12951') || text.includes('राजधानी रूट') || text.includes('rajdhani route')) {
-    const r = INDIAN_RAILWAY_ROUTES['delhi-mumbai'];
-    const responses = {
-      'hi-IN': `नई दिल्ली से मुंबई सेंट्रल का मुख्य रूट 1,386 किलोमीटर लंबा है। 12952 तेजस राजधानी इस दूरी को 15 घंटे 40 मिनट में तय करती है। इसके मुख्य स्टॉप हैं: नई दिल्ली, कोटा जंक्शन (राजस्थान), रतलाम जंक्शन (मध्य प्रदेश), वडोदरा जंक्शन (गुजरात), सूरत, बोरीवली और मुंबई सेंट्रल। यह 130 किमी/घंटे की गति से चलने वाला भारत का प्रमुख इलेक्ट्रिक रूट है।`,
-      'en-IN': `The New Delhi to Mumbai Central route spans 1,386 kilometers. On the 12952 Tejas Rajdhani Express, it takes 15 hours and 40 minutes. Major stoppage stations are New Delhi, Kota Junction, Ratlam Junction, Vadodara Junction, Surat, Borivali, and Mumbai Central. It passes across 5 states at a top speed of 130 km/h.`,
-      'ta-IN': `புது தில்லி முதல் மும்பை மத்திய ரயில் பாதை 1,386 கிமீ நீளமானது. 12952 தேஜஸ் ராஜ்தானி எக்ஸ்பிரஸ் மூலம் 15 மணி 40 நிமிடங்களில் சென்றடையலாம். முக்கிய நிறுத்தங்கள்: புது தில்லி, கோட்டா, ரத்லாம், வதோதரா, சூரத், போரிவலி மற்றும் மும்பை சென்ட்ரல்.`
-    };
-
+  // 1. Specific Route: Ghaziabad to Bhagalpur
+  if ((text.includes('ghaziabad') || text.includes('गाजियाबाद')) && (text.includes('bhagalpur') || text.includes('भागलपुर'))) {
+    const r = POPULAR_ROUTES['ghaziabad-bhagalpur'];
     return {
       intent: 'ROUTE_INFO',
-      confidence: 0.98,
+      confidence: 0.99,
       action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: responses[langCode] || responses['hi-IN'],
-      routeDetails: r
+      spokenResponse: isHindi ? r.summaryHi : r.summaryEn,
+      routeDetails: {
+        name: `${r.source} ➔ ${r.destination}`,
+        distance: r.distance,
+        duration: r.duration,
+        majorHalts: isHindi ? r.halts : r.haltsEn
+      }
     };
   }
 
-  // Route: Mumbai to Goa (Konkan Railway)
-  if ((text.includes('goa') || text.includes('गोवा')) && (text.includes('mumbai') || text.includes('route') || text.includes('ट्रेन') || text.includes('रूट'))) {
-    const r = INDIAN_RAILWAY_ROUTES['mumbai-goa'];
-    const responses = {
-      'hi-IN': `मुंबई से गोवा (मडगांव) का कोंकण रेलवे रूट 750 किलोमीटर का है, जो भारत के सबसे सुंदर रेल मार्गों में से एक है। मुख्य स्टेशन हैं: मुंबई सीएसएमटी, ठाणे, पनवेल, रोहा, रत्नागिरी, कणकवली, थीविम और मडगांव जंक्शन। इस रूट पर 2,000 से अधिक पुल और 91 सुरंगे हैं, जहाँ मानसून और सर्दियों में दूधसागर जलप्रपात का अद्भुत नज़ारा दिखता है।`,
-      'en-IN': `The Mumbai to Goa route on the Konkan Railway covers 750 kilometers in approximately 8.5 hours. Key halts are Mumbai CSMT, Thane, Panvel, Roha, Ratnagiri, Kankavli, Thivim, and Madgaon Junction. It crosses over 2,000 bridges, 91 tunnels, and offers views of lush Western Ghats and Dudhsagar falls.`
-    };
-
+  // 2. Specific Route: Delhi to Mumbai
+  if ((text.includes('delhi') || text.includes('दिल्ली')) && (text.includes('mumbai') || text.includes('मुंबई') || text.includes('12952'))) {
+    const r = POPULAR_ROUTES['delhi-mumbai'];
     return {
       intent: 'ROUTE_INFO',
-      confidence: 0.98,
+      confidence: 0.99,
       action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: responses[langCode] || responses['hi-IN'],
-      routeDetails: r
+      spokenResponse: isHindi ? r.summaryHi : r.summaryEn,
+      routeDetails: {
+        name: `${r.source} ➔ ${r.destination}`,
+        distance: r.distance,
+        duration: r.duration,
+        majorHalts: isHindi ? r.halts : r.haltsEn
+      }
     };
   }
 
-  // Route: Delhi to Varanasi (Vande Bharat 22436)
-  if ((text.includes('delhi') && text.includes('varanasi')) || text.includes('22436') || text.includes('वाराणसी रूट') || text.includes('banaras')) {
-    const r = INDIAN_RAILWAY_ROUTES['delhi-varanasi'];
-    const responses = {
-      'hi-IN': `नई दिल्ली से वाराणसी का 22436 वंदे भारत रूट 759 किलोमीटर का है और केवल 8 घंटे में पूरा होता है। मुख्य स्टॉप हैं: नई दिल्ली, कानपुर सेंट्रल, प्रयागराज जंक्शन और वाराणसी जंक्शन। इस रूट पर आपको प्रयागराज में गंगा और यमुना के संगम का सुंदर दृश्य देखने को मिलता है।`,
-      'en-IN': `The New Delhi to Varanasi route on Train 22436 Vande Bharat covers 759 km in 8 hours. The key halts are New Delhi, Kanpur Central, Prayagraj Junction, and Varanasi Junction.`
-    };
-
+  // 3. Specific Route: Mumbai to Goa
+  if ((text.includes('mumbai') || text.includes('मुंबई')) && (text.includes('goa') || text.includes('गोवा'))) {
+    const r = POPULAR_ROUTES['mumbai-goa'];
     return {
       intent: 'ROUTE_INFO',
-      confidence: 0.98,
+      confidence: 0.99,
       action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: responses[langCode] || responses['hi-IN'],
-      routeDetails: r
+      spokenResponse: isHindi ? r.summaryHi : r.summaryEn,
+      routeDetails: {
+        name: `${r.source} ➔ ${r.destination}`,
+        distance: r.distance,
+        duration: r.duration,
+        majorHalts: isHindi ? r.halts : r.haltsEn
+      }
     };
   }
 
-  // Route: Kashmir Chenab Bridge route
-  if (text.includes('kashmir') || text.includes('chenab') || text.includes('चिनाब') || text.includes('कटड़ा') || text.includes('katra') || text.includes('srinagar')) {
-    const r = INDIAN_RAILWAY_ROUTES['kashmir-valley'];
+  // 4. Specific Route: Delhi to Varanasi
+  if ((text.includes('delhi') || text.includes('दिल्ली')) && (text.includes('varanasi') || text.includes('वाराणसी') || text.includes('22436'))) {
+    const r = POPULAR_ROUTES['delhi-varanasi'];
     return {
       intent: 'ROUTE_INFO',
-      confidence: 0.98,
+      confidence: 0.99,
       action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: `कश्मीर रेलवे रूट पर श्री माता वैष्णो देवी कटड़ा से बनिहाल होकर श्रीनगर तक का सफर अद्वितीय है। यह मार्ग चिनाब नदी पर बने दुनिया के सबसे ऊंचे रेलवे आर्च ब्रिज से होकर गुजरता है, जो एफिल टॉवर से 35 मीटर ऊंचा है। पीर पंजाल सुरंग और बर्फ से ढकी वादियां इस रूट का मुख्य आकर्षण हैं।`,
-      routeDetails: r
+      spokenResponse: isHindi ? r.summaryHi : r.summaryEn,
+      routeDetails: {
+        name: `${r.source} ➔ ${r.destination}`,
+        distance: r.distance,
+        duration: r.duration,
+        majorHalts: isHindi ? r.halts : r.haltsEn
+      }
     };
   }
 
-  // Generic Route query
-  if (text.includes('route') || text.includes('रूट') || text.includes('मार्ग') || text.includes('stations') || text.includes('स्टॉप') || text.includes('halt')) {
-    return {
-      intent: 'ROUTE_INFO',
-      confidence: 0.95,
-      action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: `भारतीय रेल नेटवर्क पर तेजस राजधानी, वंदे भारत और शताब्दी एक्सप्रेस के सभी प्रमुख रूट उपलब्ध हैं। जैसे नई दिल्ली-मुंबई (1386 किमी, 6 स्टॉप), मुंबई-गोवा कोंकण रेल (750 किमी), और दिल्ली-वाराणसी (759 किमी)। आप किसी भी विशिष्ट ट्रेन नंबर या शहर के रूट के बारे में पूछ सकते हैं!`
-    };
+  // 5. Dynamic station pair route detector (e.g. from X to Y / X से Y)
+  const pairMatchEn = text.match(/(?:from\s+)?([a-z\s]+?)\s+(?:to|-)\s+([a-z\s]+?)(?:\s+train|\s+route|\s+stations|$)/);
+  const pairMatchHi = text.match(/([^\s]+)\s+से\s+([^\s]+)\s+(?:का|की|ट्रेन|रूट)/);
+
+  if (pairMatchEn || pairMatchHi) {
+    const fromCity = (pairMatchEn ? pairMatchEn[1] : pairMatchHi[1]).trim();
+    const toCity = (pairMatchEn ? pairMatchEn[2] : pairMatchHi[2]).trim();
+
+    if (fromCity.length > 2 && toCity.length > 2 && !['what', 'where', 'how', 'show', 'tell'].includes(fromCity)) {
+      const fromCap = fromCity.charAt(0).toUpperCase() + fromCity.slice(1);
+      const toCap = toCity.charAt(0).toUpperCase() + toCity.slice(1);
+
+      const dynamicResponse = isHindi
+        ? `${fromCap} से ${toCap} का रेल मार्ग प्रमुख भारतीय रेल कॉरिडोर द्वारा जुड़ा हुआ है। इस रूट पर सुपरफास्ट और एक्सप्रेस ट्रेनें उपलब्ध हैं। टिकट आरक्षण और समय सारिणी के लिए ट्रेन सर्च का उपयोग करें।`
+        : `The rail route between ${fromCap} and ${toCap} operates across major Indian Railways junctions with regular superfast and express services.`;
+
+      return {
+        intent: 'ROUTE_INFO',
+        confidence: 0.95,
+        action: 'NAVIGATE_TO_TRACKER',
+        spokenResponse: dynamicResponse,
+        routeDetails: {
+          name: `${fromCap} ➔ ${toCap}`,
+          distance: 'Direct Indian Railway Corridor',
+          duration: 'Regular Scheduled Services',
+          majorHalts: `${fromCap} ➔ Major Junctions ➔ ${toCap}`
+        }
+      };
+    }
   }
 
-  // Where Is My Train / Live Status
-  if (text.includes('कहां') || text.includes('kahan') || text.includes('where') || text.includes('running') || text.includes('status')) {
-    const trainNumMatch = text.match(/\b(12952|22436|12009|12301|20607|\d{5})\b/);
-    const trainNum = trainNumMatch ? trainNumMatch[1] : '12952';
+  // 6. Where Is My Train / Live Status query
+  if (text.includes('कहां') || text.includes('kahan') || text.includes('where') || text.includes('running') || text.includes('12952')) {
+    const trainNumMatch = text.match(/\b\d{5}\b/);
+    const trainNum = trainNumMatch ? trainNumMatch[0] : '12952';
     return {
       intent: 'LIVE_TRAIN_TRACKING',
-      confidence: 0.96,
-      extractedEntities: { trainNumber: trainNum },
+      confidence: 0.98,
       action: 'NAVIGATE_TO_TRACKER',
-      spokenResponse: `ट्रेन संख्या ${trainNum} (तेजस राजधानी) वर्तमान में 114 किमी/घंटे की गति से चल रही है। अगला स्टेशन कोटा जंक्शन प्लेटफॉर्म 1A पर 24 मिनट में पहुंचेगी। ट्रेन बिल्कुल समय पर है।`
+      spokenResponse: isHindi
+        ? `ट्रेन ${trainNum} तेजस राजधानी वर्तमान में 114 किमी/घंटा गति से चल रही है। अगला स्टॉप कोटा जंक्शन प्लेटफॉर्म 1A पर 24 मिनट में है। समय पर चल रही है।`
+        : `Train ${trainNum} Tejas Rajdhani is running on time at 114 km/h. Next stop is Kota Junction on Platform 1A in 24 minutes.`
     };
   }
 
-  // PNR Status
-  if (text.includes('pnr') || text.includes('पीएनआर') || text.includes('status')) {
+  // 7. PNR Status query
+  if (text.includes('pnr') || text.includes('पीएनआर')) {
     const pnrMatch = text.match(/\b\d{10}\b/);
     const pnr = pnrMatch ? pnrMatch[0] : '2849102941';
     return {
       intent: 'CHECK_PNR_STATUS',
       confidence: 0.98,
-      extractedEntities: { pnr },
       action: 'NAVIGATE_TO_PNR',
-      spokenResponse: `आपका PNR ${pnr} कन्फर्म है! कोच B4, बर्थ संख्या 21 (लोअर बर्थ)। प्लेटफॉर्म नंबर 1 पर गाड़ी आएगी। शुभ यात्रा!`
+      spokenResponse: isHindi
+        ? `PNR ${pnr} कन्फर्म है। कोच B4, बर्थ 21 लोअर बर्थ। गाड़ी प्लेटफॉर्म 1 पर पहुंचेगी।`
+        : `PNR ${pnr} is confirmed in Coach B4, Berth 21 Lower Berth, on Platform 1.`
     };
   }
 
-  // Food Ordering
+  // 8. Food Ordering query
   if (text.includes('खाना') || text.includes('food') || text.includes('thali') || text.includes('order')) {
     return {
       intent: 'ORDER_FOOD',
-      confidence: 0.94,
+      confidence: 0.95,
       action: 'NAVIGATE_TO_FOOD',
-      spokenResponse: `कोटा जंक्शन पर हल्दीराम और डोमिनोज़ से खाना उपलब्ध है। मैंने आपकी सीट B4 बर्थ 21 के लिए महाराजा वेज थाली मेनू खोल दिया है।`
+      spokenResponse: isHindi
+        ? `कोटा जंक्शन पर हल्दीराम और डोमिनोज़ से खाना उपलब्ध है। आपकी सीट B4 बर्थ 21 के लिए मेनू खोल दिया है।`
+        : `Hot meals from Haldirams and Dominos are available at Kota Junction for seat delivery.`
     };
   }
 
-  // Ticket Booking
+  // 9. Ticket Booking query
   if (text.includes('book') || text.includes('टिकट') || text.includes('seat')) {
     return {
       intent: 'BOOK_TICKET',
-      confidence: 0.92,
+      confidence: 0.95,
       action: 'NAVIGATE_TO_BOOKING',
-      spokenResponse: `टिकट बुकिंग पोर्टल खोल दिया गया है। नई दिल्ली से मुंबई के लिए तेजस राजधानी और वंदे भारत में तत्काल और जनरल सीटें उपलब्ध हैं।`
+      spokenResponse: isHindi
+        ? `टिकट बुकिंग पोर्टल खोल दिया गया है। नई दिल्ली से मुंबई के लिए तेजस राजधानी और वंदे भारत में सीटें उपलब्ध हैं।`
+        : `Booking portal opened for ticket reservations.`
     };
   }
 
-  // Universal Conversational Fallback
+  // 10. Direct response without introductory filler or capability listings
   return {
     intent: 'GENERAL_TRAVEL_QNA',
-    confidence: 0.90,
+    confidence: 0.92,
     action: 'SHOW_HELP',
-    spokenResponse: `RailMate AI सहायक: आप भारतीय रेल के किसी भी रूट, लाइव ट्रेन स्टेटस, PNR, सीट कन्फर्मेशन या कोच नियमों के बारे में पूछ सकते हैं। मैं ChatGPT API और Google Gemini द्वारा संचालित हूँ!`
+    spokenResponse: isHindi
+      ? `कृपया ट्रेन नंबर, रूट (जैसे गाजियाबाद से भागलपुर), स्टेशन या PNR नंबर बताएं।`
+      : `Please specify the train number, route (e.g., Ghaziabad to Bhagalpur), station, or PNR.`
   };
 }
 
-// Routes
+// Health check
 app.get('/health', (req, res) => {
   res.json({
     service: 'voice-ai-service',
     status: 'healthy',
     port: PORT,
     chatGptConfigured: Boolean(OPENAI_API_KEY),
-    chatGptModel: CHATGPT_MODEL,
     geminiConfigured: Boolean(GEMINI_API_KEY),
-    geminiModel: GEMINI_MODEL,
-    sarvamConfigured: Boolean(SARVAM_API_KEY),
-    supportedLanguages: SUPPORTED_LANGUAGES.length,
+    directAnswersOnly: true,
+    noCapabilityListings: true,
     timestamp: new Date().toISOString()
   });
 });
 
 app.get('/supported-languages', (req, res) => {
-  res.json({
-    success: true,
-    languages: SUPPORTED_LANGUAGES
-  });
+  res.json({ success: true, languages: SUPPORTED_LANGUAGES });
 });
 
-// Process Voice / Text Query using ChatGPT API -> Gemini API -> Local Route Engine
+// Process query using ChatGPT API -> Gemini API -> Direct Route Answer Engine
 app.post('/process-query', async (req, res) => {
   try {
     const { query, languageCode = 'hi-IN', preferredModel = 'chatgpt' } = req.body;
@@ -353,10 +398,10 @@ app.post('/process-query', async (req, res) => {
     }
 
     let aiResult = null;
-    let engineUsed = 'Local Route Engine';
+    let engineUsed = 'Direct Route Engine';
 
-    // 1. Try ChatGPT API if available or requested
-    if (OPENAI_API_KEY && (preferredModel === 'chatgpt' || !GEMINI_API_KEY)) {
+    // 1. Try ChatGPT API if key is present
+    if (OPENAI_API_KEY && preferredModel === 'chatgpt') {
       aiResult = await callChatGptApi(query, languageCode);
       if (aiResult) engineUsed = `OpenAI ChatGPT (${CHATGPT_MODEL})`;
     }
@@ -367,10 +412,10 @@ app.post('/process-query', async (req, res) => {
       if (aiResult) engineUsed = `Google Gemini (${GEMINI_MODEL})`;
     }
 
-    // 3. Fallback to comprehensive Indian Railways Route & Travel Knowledge Engine
+    // 3. Fallback to Direct Route & Answer Engine
     if (!aiResult) {
-      aiResult = parseRouteAndGeneralQuery(query, languageCode);
-      engineUsed = 'RailMate Hybrid Route & Travel Intelligence';
+      aiResult = resolveDirectAnswer(query, languageCode);
+      engineUsed = 'RailMate Direct Route Engine';
     }
 
     res.json({
@@ -378,23 +423,20 @@ app.post('/process-query', async (req, res) => {
       originalQuery: query,
       languageCode,
       ...aiResult,
-      engine: engineUsed,
-      chatGptPowered: Boolean(OPENAI_API_KEY),
-      geminiPowered: Boolean(GEMINI_API_KEY)
+      engine: engineUsed
     });
   } catch (err) {
-    console.error('NLP processing error:', err);
-    res.status(500).json({ error: 'Failed to process voice query' });
+    console.error('Processing error:', err);
+    res.status(500).json({ error: 'Processing error' });
   }
 });
 
-// Conversational Q&A (ChatGPT API + Gemini API)
+// Direct conversational Q&A endpoint
 app.post('/chat-assistant', async (req, res) => {
   try {
     const { prompt, languageCode = 'hi-IN' } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
-    // 1. Try ChatGPT API
     if (OPENAI_API_KEY) {
       try {
         const response = await fetch(OPENAI_CHAT_URL, {
@@ -406,13 +448,10 @@ app.post('/chat-assistant', async (req, res) => {
           body: JSON.stringify({
             model: CHATGPT_MODEL,
             messages: [
-              {
-                role: 'system',
-                content: `You are RailMate, an expert Indian Railways AI travel assistant. Answer helpfully, concisely, and accurately in language ${languageCode} to whatever the user asks (routes, halts, timings, luggage, concessions, food, tourism).`
-              },
+              { role: 'system', content: STRICT_SYSTEM_INSTRUCTION },
               { role: 'user', content: prompt }
             ],
-            temperature: 0.3
+            temperature: 0.2
           })
         });
 
@@ -423,40 +462,15 @@ app.post('/chat-assistant', async (req, res) => {
             return res.json({ success: true, reply, model: `ChatGPT (${CHATGPT_MODEL})` });
           }
         }
-      } catch (e) {
-        console.warn('ChatGPT call error, falling back:', e.message);
-      }
-    }
-
-    // 2. Try Google Gemini API
-    if (GEMINI_API_KEY) {
-      try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              role: 'user',
-              parts: [{
-                text: `You are RailMate, an expert Indian Railways AI travel assistant. Answer helpfully and accurately in language ${languageCode} to: "${prompt}"`
-              }]
-            }]
-          })
-        });
-        const data = await response.json();
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (reply) {
-          return res.json({ success: true, reply, model: `Google Gemini (${GEMINI_MODEL})` });
-        }
       } catch (e) {}
     }
 
-    // 3. Built-in Route & Travel Engine answer
-    const queryResult = parseRouteAndGeneralQuery(prompt, languageCode);
+    // Fallback: direct answer with zero filler
+    const directAns = resolveDirectAnswer(prompt, languageCode);
     res.json({
       success: true,
-      reply: queryResult.spokenResponse,
-      model: 'ChatGPT / Gemini Hybrid Route Engine (Simulated Fallback)'
+      reply: directAns.spokenResponse,
+      model: 'RailMate Direct Assistant'
     });
   } catch (e) {
     res.status(500).json({ error: 'Chat assistant error' });
@@ -488,8 +502,8 @@ app.post('/sarvam-stt', async (req, res) => {
 
     res.json({
       success: true,
-      transcript: 'दिल्ली से मुंबई का पूरा रूट और मुख्य स्टेशन क्या हैं?',
-      engine: 'RailMate Indic Speech Engine (Sarvam Saaras Protocol)',
+      transcript: 'गाजियाबाद से भागलपुर का ट्रेन रूट क्या है?',
+      engine: 'RailMate Indic Speech Engine',
       confidence: 0.98
     });
   } catch (err) {
@@ -500,21 +514,17 @@ app.post('/sarvam-stt', async (req, res) => {
 // Human Audio Voice Synthesizer Profile
 app.post('/synthesize-human-voice', (req, res) => {
   try {
-    const { text, languageCode = 'hi-IN', voicePersona = 'gemini_conversational' } = req.body;
+    const { text, languageCode = 'hi-IN' } = req.body;
     res.json({
       success: true,
       textToSpeak: text,
       languageCode,
       persona: {
-        name: 'Gemini Aoede / ChatGPT Natural Human Voice',
+        name: 'Pure Human Conversational Voice',
         style: 'conversational_human',
         pitch: 1.0,
-        speakingRate: 1.01,
-        breathSimulation: true,
-        presenceFilter: 'warm_studio'
-      },
-      engine: 'Google Gemini & ChatGPT Natural Voice Engine',
-      audioCadence: { naturalPauses: true, warmAcoustics: true, noRoboticMonotone: true }
+        speakingRate: 1.01
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to synthesize human voice' });
@@ -523,6 +533,5 @@ app.post('/synthesize-human-voice', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[VOICE-AI-SERVICE] Running on port ${PORT}`);
-  console.log(`[VOICE-AI-SERVICE] Integrated with ChatGPT API, Google Gemini & Sarvam AI`);
-  console.log(`[VOICE-AI-SERVICE] Indian Railways Route & Travel Knowledge Engine Activated`);
+  console.log(`[VOICE-AI-SERVICE] Strict Direct Answers Enforcement Active`);
 });

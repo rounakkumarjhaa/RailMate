@@ -105,7 +105,16 @@ async function runE2ETests() {
   const voice = await voiceRes.json();
   console.log('11. Sarvam AI NLP Intent:', voice.intent, 'Spoken Audio Response:', voice.spokenResponse);
 
-  console.log('--- ALL 11 END-TO-END GATEWAY TESTS PASSED! ---');
+  // 12. Google Gemini Conversational Intelligence
+  const geminiRes = await fetch(`${GATEWAY}/api/voice-ai/gemini-chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: 'Explain senior citizen lower berth quota rules on Indian Railways', languageCode: 'en-IN' })
+  });
+  const gemini = await geminiRes.json();
+  console.log('12. Google Gemini API Assistant Reply:', gemini.reply.slice(0, 75) + '...', 'Model:', gemini.model);
+
+  console.log('--- ALL 12 END-TO-END GATEWAY TESTS PASSED! ---');
 }
 
 runE2ETests();

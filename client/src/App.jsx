@@ -134,7 +134,7 @@ export default function App() {
             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
           </div>
           <span className="font-semibold tracking-wide">
-            Sarvam AI Voice Assistant
+            Gemini & Sarvam AI Voice Assistant
           </span>
           <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded text-orange-200 uppercase font-mono">
             {selectedLang.split('-')[0]}

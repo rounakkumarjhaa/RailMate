@@ -121,7 +121,7 @@ export default function Navbar({
               title="Open Voice Assistant"
             >
               <Mic className="w-4 h-4 text-orange-400 animate-pulse" />
-              <span className="hidden sm:inline">Sarvam AI</span>
+              <span className="hidden sm:inline">Gemini + Sarvam AI</span>
             </button>
 
             {/* Microservices Status Indicator */}

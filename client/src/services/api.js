@@ -203,6 +203,15 @@ export const api = {
     return await res.json();
   },
 
+  async askGeminiChat(prompt, languageCode) {
+    const res = await fetch(`${API_BASE}/voice-ai/gemini-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, languageCode })
+    });
+    return await res.json();
+  },
+
   async getSupportedLanguages() {
     const res = await fetch(`${API_BASE}/voice-ai/supported-languages`);
     return await res.json();

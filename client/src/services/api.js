@@ -154,8 +154,12 @@ export const api = {
   },
 
   // Destinations & Google Places
-  async getFeaturedDestinations() {
-    const res = await fetch(`${API_BASE}/destinations/featured-destinations`);
+  async getFeaturedDestinations(query = '', category = '') {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (category && category !== 'all') params.append('category', category);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/destinations/featured-destinations${queryString}`);
     return await res.json();
   },
 
